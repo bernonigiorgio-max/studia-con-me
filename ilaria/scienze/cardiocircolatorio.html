@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🫀 Apparato Cardiocircolatorio – Ilaria</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bord:#6B1D1D;--bord-l:#8B2D2D;--bord-d:#3D0A0A;--cream:#FAF3E8;--cream-d:#EFE3CC;--gold:#C9973A;--gold-l:#E8B855;--txt:#2C1810;--txt-l:#5C3A28;--grn:#2D6A4F;--ylw:#D4900A;--red:#C0392B;--shd:0 4px 20px rgba(107,29,29,.15);--r:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--txt);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.serif{font-family:'DM Serif Display',serif}
+.screen{display:none;min-height:100vh;animation:fadeIn .3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── PROJECT SCREEN ── */
+#sp{background:var(--cream);padding:0 0 48px}
+.proj-hero{background:var(--bord-d);color:var(--cream);padding:28px 20px 24px;position:relative;overflow:hidden}
+.proj-hero::after{content:'🫀';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:72px;opacity:.12;animation:pulse 2s infinite}
+.proj-hero h1{font-size:24px;line-height:1.2;margin-bottom:4px}
+.proj-hero .sub{color:var(--gold-l);font-size:13px;font-weight:500}
+.proj-inner{max-width:700px;margin:0 auto;padding:20px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-c{background:#fff;border-radius:12px;padding:14px 10px;text-align:center;box-shadow:var(--shd)}
+.stat-v{font-size:26px;font-family:'DM Serif Display',serif;color:var(--bord)}
+.stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-l);font-weight:700;margin-top:2px}
+
+/* mappa */
+.section-card{background:#fff;border-radius:var(--r);padding:18px;margin-bottom:16px;box-shadow:var(--shd)}
+.section-card h3{font-size:15px;color:var(--bord);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.map-wrap{display:flex;flex-direction:column;gap:12px}
+@media(min-width:580px){.map-wrap{flex-direction:row}}
+.map-svg-area{flex:0 0 auto;display:flex;justify-content:center}
+.map-info{flex:1;background:var(--cream);border-radius:10px;padding:12px;min-height:100px}
+.map-info-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--bord);margin-bottom:6px}
+.map-info-list{list-style:none;font-size:13px;color:var(--txt-l);line-height:1.9}
+.map-info-list li::before{content:'→ ';color:var(--gold)}
+.map-zone{cursor:pointer;transition:opacity .2s,filter .2s}
+.map-zone:hover{opacity:.8;filter:brightness(1.1)}
+
+/* badge sapere */
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.badge{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px}
+.badge.verde{background:#d4edda;color:#155724}
+.badge.giallo{background:#fff3cd;color:#856404}
+.badge.rosso{background:#f8d7da;color:#721c24}
+
+/* ripasso */
+.ripasso-btn{width:100%;background:var(--bord);color:var(--cream);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.ripasso-btn:hover{background:var(--bord-l)}
+.rip-count{background:var(--gold);color:var(--txt);border-radius:10px;padding:2px 10px;font-size:13px}
+
+/* modalità grid */
+.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.mod-btn{background:#fff;border:2px solid var(--cream-d);border-radius:var(--r);padding:16px 12px;cursor:pointer;text-align:center;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif}
+.mod-btn:hover{border-color:var(--bord);transform:translateY(-2px);box-shadow:var(--shd)}
+.mod-btn .mi{font-size:26px;margin-bottom:5px}
+.mod-btn .mn{font-size:13px;font-weight:700;color:var(--bord)}
+.mod-btn .md{font-size:11px;color:var(--txt-l);margin-top:2px}
+
+/* timer toggle */
+.toggle-row{background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shd)}
+.toggle-row .label{font-size:13px;font-weight:600;color:var(--txt)}
+.toggle-row .hint{font-size:11px;color:var(--txt-l);margin-top:1px}
+.sw{position:relative;width:44px;height:24px;flex-shrink:0}
+.sw input{display:none}
+.sw-sl{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:background .2s}
+.sw-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.sw input:checked+.sw-sl{background:var(--bord)}
+.sw input:checked+.sw-sl::before{transform:translateX(20px)}
+
+/* ── SHARED HEADER ── */
+.sh{background:var(--bord);color:var(--cream);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.back{background:none;border:none;color:var(--cream);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;line-height:1}
+.back:hover{background:rgba(255,255,255,.1)}
+.sh-title{font-family:'DM Serif Display',serif;font-size:18px;flex:1}
+.sh-counter{font-size:13px;color:var(--gold-l);font-weight:600}
+.prog-wrap{background:rgba(255,255,255,.2);height:5px;margin:0}
+.prog-fill{height:100%;background:var(--gold-l);transition:width .4s ease}
+
+/* ── STUDIO ── */
+#ss .inner{max-width:680px;margin:0 auto;padding:20px}
+.blk{background:#fff;border-radius:var(--r);padding:22px;margin-bottom:16px;box-shadow:var(--shd);border-left:4px solid var(--bord)}
+.blk-num{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:6px}
+.blk-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--bord);margin-bottom:10px}
+.blk-txt{font-size:15px;line-height:1.75;color:var(--txt)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{background:var(--cream-d);color:var(--bord);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid rgba(107,29,29,.15)}
+.micro{background:var(--bord);border-radius:12px;padding:18px;margin-top:14px;color:var(--cream)}
+.micro-q{font-size:14px;font-weight:600;margin-bottom:12px}
+.micro-opts{display:flex;flex-direction:column;gap:7px}
+.mo{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:9px 13px;color:var(--cream);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;text-align:left;transition:background .15s}
+.mo:hover:not(:disabled){background:rgba(255,255,255,.2)}
+.mo.ok{background:#2D6A4F;border-color:#2D6A4F}
+.mo.no{background:#C0392B;border-color:#C0392B}
+.mo:disabled{cursor:default}
+.micro-fb{margin-top:10px;font-size:13px;display:none;line-height:1.5}
+.btn-avanti{width:100%;margin-top:10px;background:var(--gold);color:var(--txt);border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;display:none;transition:background .2s}
+.btn-avanti:hover{background:var(--gold-l)}
+.blk-locked{opacity:.4;pointer-events:none;filter:blur(2px)}
+
+/* ── FLASHCARD ── */
+#sf{background:var(--bord-d)}
+#sf .inner{max-width:580px;margin:0 auto;padding:20px}
+.srs-info{background:rgba(201,151,58,.2);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--gold-l);font-weight:600;margin-bottom:16px;text-align:center}
+.fc-prog{color:rgba(250,243,232,.6);font-size:12px;text-align:center;margin-bottom:16px}
+.scene{perspective:1000px;height:240px;cursor:pointer;margin-bottom:20px}
+.card3d{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s}
+.card3d.flip{transform:rotateY(180deg)}
+.cface{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center}
+.cfront{background:#fff;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.cback{background:var(--gold);transform:rotateY(180deg);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.clabel{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;opacity:.55;margin-bottom:10px}
+.cfront .clabel{color:var(--txt-l)}
+.cback .clabel{color:var(--bord-d)}
+.ctext{font-family:'DM Serif Display',serif;font-size:20px;line-height:1.4}
+.cfront .ctext{color:var(--bord)}
+.cback .ctext{color:var(--txt)}
+.chint{font-size:11px;color:rgba(44,24,16,.5);margin-top:10px}
+.fc-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fca{border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .2s}
+.fca.no{background:rgba(255,255,255,.1);color:var(--cream);border:2px solid rgba(255,255,255,.2)}
+.fca.si{background:var(--gold);color:var(--txt)}
+.fca:hover:not(:disabled){transform:translateY(-2px)}
+.fca:disabled{opacity:.35;cursor:default;transform:none}
+
+/* ── QUIZ ── */
+#sq{background:var(--cream)}
+#sq .inner{max-width:660px;margin:0 auto;padding:20px}
+.tbar-wrap{background:var(--cream-d);height:8px;border-radius:4px;margin-bottom:18px;overflow:hidden}
+.tbar-fill{height:100%;background:var(--bord);border-radius:4px;transition:width 1s linear}
+.tbar-fill.w{background:var(--ylw)}
+.tbar-fill.d{background:var(--red)}
+.qcard{background:#fff;border-radius:var(--r);padding:26px 22px;margin-bottom:14px;box-shadow:var(--shd)}
+.qnum{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin-bottom:8px}
+.qtext{font-family:'DM Serif Display',serif;font-size:20px;color:var(--txt);line-height:1.4}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qo{background:#fff;border:2px solid var(--cream-d);border-radius:12px;padding:13px 16px;font-size:14px;color:var(--txt);font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:10px}
+.qo .lt{width:26px;height:26px;border-radius:50%;background:var(--cream-d);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;color:var(--bord)}
+.qo:hover:not(:disabled){border-color:var(--bord);transform:translateX(4px)}
+.qo.ok{background:#d4edda;border-color:var(--grn)}
+.qo.no{background:#f8d7da;border-color:var(--red)}
+.qo.ok .lt{background:var(--grn);color:#fff}
+.qo.no .lt{background:var(--red);color:#fff}
+.qo:disabled{cursor:default;transform:none}
+.qfb{background:var(--cream);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.6;color:var(--txt-l);margin-top:10px;border-left:3px solid var(--gold);display:none}
+.btn-nq{width:100%;background:var(--bord);color:var(--cream);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-top:14px;display:none;transition:background .2s}
+.btn-nq:hover{background:var(--bord-l)}
+
+/* ── DOMANDE APERTE ── */
+#sa{background:var(--cream)}
+#sa .inner{max-width:660px;margin:0 auto;padding:20px}
+.rsp-inp{width:100%;border:2px solid var(--cream-d);border-radius:12px;padding:12px 14px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt);background:#fff;resize:vertical;min-height:90px;margin-bottom:10px;transition:border-color .2s}
+.rsp-inp:focus{outline:none;border-color:var(--bord)}
+.btn-ver{background:var(--bord);color:var(--cream);border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:background .2s}
+.btn-ver:hover{background:var(--bord-l)}
+.semaph{display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;margin-bottom:10px;font-weight:700;font-size:14px;display:none}
+.semaph.v{background:#d4edda;color:#155724}
+.semaph.g{background:#fff3cd;color:#856404}
+.semaph.r{background:#f8d7da;color:#721c24}
+.fb-det{background:#fff;border-radius:12px;padding:12px 16px;font-size:13px;color:var(--txt-l);line-height:1.6;margin-bottom:8px;display:none}
+.rif-ans{background:var(--cream-d);border-radius:12px;padding:12px 16px;font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:14px;border-left:3px solid var(--bord);display:none}
+
+/* ── RISULTATI ── */
+#sr{background:var(--bord-d)}
+#sr .inner{max-width:660px;margin:0 auto;padding:28px 20px 60px}
+.ris-hero{text-align:center;margin-bottom:20px}
+.ris-stelle{font-size:38px;margin-bottom:6px}
+.ris-titolo{font-family:'DM Serif Display',serif;font-size:26px;color:var(--cream);margin-bottom:4px}
+.ris-msg{color:var(--gold-l);font-size:14px;margin-bottom:16px}
+.ris-score{font-family:'DM Serif Display',serif;font-size:52px;color:var(--gold-l);line-height:1}
+.ris-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.ris-st{background:rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center}
+.ris-sv{font-size:26px;font-family:'DM Serif Display',serif;color:var(--cream)}
+.ris-sl{font-size:11px;color:rgba(250,243,232,.55);margin-top:3px}
+.err-sec{background:rgba(255,255,255,.06);border-radius:var(--r);padding:18px;margin-bottom:18px}
+.err-sec h3{font-family:'DM Serif Display',serif;color:var(--gold-l);font-size:17px;margin-bottom:12px}
+.err-item{background:rgba(255,255,255,.05);border-radius:10px;padding:10px 12px;margin-bottom:7px}
+.err-q{color:rgba(250,243,232,.75);font-size:13px;margin-bottom:3px}
+.err-a{color:var(--gold-l);font-size:12px;font-weight:600}
+.btn-home{width:100%;background:var(--gold);color:var(--txt);border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:10px;transition:background .2s}
+.btn-home:hover{background:var(--gold-l)}
+.btn-att{width:100%;background:rgba(255,255,255,.1);color:var(--cream);border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:14px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .2s}
+.btn-att:hover{background:rgba(255,255,255,.15)}
+
+/* ── ATTESTATO ── */
+#sat{background:var(--cream);min-height:100vh}
+#sat .inner{max-width:560px;margin:0 auto;padding:30px 20px}
+.att-card{background:#fff;border:3px solid var(--gold);border-radius:24px;padding:44px 36px;text-align:center;box-shadow:0 8px 40px rgba(107,29,29,.2);position:relative;overflow:hidden}
+.att-card::before{content:'';position:absolute;top:12px;left:12px;right:12px;bottom:12px;border:1px solid rgba(201,151,58,.3);border-radius:18px;pointer-events:none}
+.att-trofeo{font-size:56px;margin-bottom:12px}
+.att-card h1{font-size:28px;color:var(--bord);margin-bottom:6px}
+.att-nome{font-family:'DM Serif Display',serif;font-size:38px;color:var(--gold);margin:14px 0}
+.att-mat{font-size:16px;color:var(--txt-l)}
+.att-data{font-size:13px;color:var(--txt-l);margin:6px 0 22px}
+.btn-print{background:var(--bord);color:var(--cream);border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin:6px;transition:background .2s}
+.btn-print:hover{background:var(--bord-l)}
+@media print{body>*:not(#sat){display:none!important}#sat{display:block!important}.no-print{display:none!important}}
+
+/* toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--txt);color:var(--cream);padding:10px 22px;border-radius:22px;font-size:13px;font-weight:600;z-index:999;transition:transform .3s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SCHERMATA PROGETTO ══════════════ -->
+<div id="sp" class="screen active">
+  <div class="proj-hero">
+    <h1>Apparato Cardiocircolatorio</h1>
+    <div class="sub">Scienze · Ilaria</div>
+  </div>
+  <div class="proj-inner">
+    <div class="stats-row">
+      <div class="stat-c"><div class="stat-v" id="st-sessioni">0</div><div class="stat-l">Sessioni</div></div>
+      <div class="stat-c"><div class="stat-v" id="st-best">—</div><div class="stat-l">Miglior punteggio</div></div>
+      <div class="stat-c"><div class="stat-v" id="st-ripasso">0</div><div class="stat-l">Da ripassare</div></div>
+    </div>
+
+    <!-- RIPASSO VELOCE -->
+    <button class="ripasso-btn" id="btn-ripasso" onclick="startRipasso()">
+      ⚡ Ripasso veloce <span class="rip-count" id="rip-count">0</span>
+    </button>
+
+    <!-- MAPPA INTERATTIVA -->
+    <div class="section-card">
+      <h3>🗺 Mappa interattiva</h3>
+      <div class="map-wrap">
+        <div class="map-svg-area">
+          <svg width="200" height="300" viewBox="0 0 200 300" id="mappa-svg">
+            <!-- CORPO SILHOUETTE -->
+            <ellipse cx="100" cy="26" rx="22" ry="25" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="72" y="50" width="56" height="80" rx="8" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="40" y="55" width="28" height="65" rx="8" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="132" y="55" width="28" height="65" rx="8" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="76" y="130" width="22" height="80" rx="8" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="102" y="130" width="22" height="80" rx="8" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="72" y="208" width="22" height="50" rx="7" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+            <rect x="106" y="208" width="22" height="50" rx="7" fill="#E8D5C0" stroke="#C9A87A" stroke-width="1.5"/>
+
+            <!-- ZONA: CUORE -->
+            <g class="map-zone" id="mz-cuore" onclick="mapClick('cuore')" data-zone="cuore">
+              <ellipse cx="100" cy="85" rx="18" ry="16" fill="#C0392B" opacity=".85" class="heart-pulse"/>
+              <text x="100" y="89" text-anchor="middle" font-size="9" fill="#fff" font-family="Plus Jakarta Sans" font-weight="700">CUORE</text>
+            </g>
+
+            <!-- ZONA: POLMONI -->
+            <g class="map-zone" id="mz-polmoni" onclick="mapClick('polmoni')" data-zone="polmoni">
+              <ellipse cx="82" cy="72" rx="9" ry="11" fill="#7FB3D3" opacity=".8"/>
+              <ellipse cx="118" cy="72" rx="9" ry="11" fill="#7FB3D3" opacity=".8"/>
+              <text x="100" y="62" text-anchor="middle" font-size="7.5" fill="#1a4a6e" font-family="Plus Jakarta Sans" font-weight="700">POLMONI</text>
+            </g>
+
+            <!-- ZONA: ARTERIE (freccia rossa su) -->
+            <g class="map-zone" id="mz-arterie" onclick="mapClick('arterie')" data-zone="arterie">
+              <line x1="110" y1="100" x2="148" y2="150" stroke="#C0392B" stroke-width="5" stroke-linecap="round"/>
+              <polygon points="148,142 155,155 141,155" fill="#C0392B"/>
+              <text x="148" y="168" text-anchor="middle" font-size="7.5" fill="#C0392B" font-family="Plus Jakarta Sans" font-weight="700">ARTERIE</text>
+            </g>
+
+            <!-- ZONA: VENE (freccia blu su) -->
+            <g class="map-zone" id="mz-vene" onclick="mapClick('vene')" data-zone="vene">
+              <line x1="90" y1="100" x2="52" y2="150" stroke="#2980B9" stroke-width="5" stroke-linecap="round"/>
+              <polygon points="52,141 45,154 59,154" fill="#2980B9"/>
+              <text x="50" y="168" text-anchor="middle" font-size="7.5" fill="#2980B9" font-family="Plus Jakarta Sans" font-weight="700">VENE</text>
+            </g>
+
+            <!-- ZONA: SANGUE -->
+            <g class="map-zone" id="mz-sangue" onclick="mapClick('sangue')" data-zone="sangue">
+              <circle cx="100" cy="200" r="16" fill="#8B0000" opacity=".75"/>
+              <text x="100" y="204" text-anchor="middle" font-size="8" fill="#fff" font-family="Plus Jakarta Sans" font-weight="700">SANGUE</text>
+            </g>
+
+            <!-- ZONA: CAPILLARI -->
+            <g class="map-zone" id="mz-capillari" onclick="mapClick('capillari')" data-zone="capillari">
+              <circle cx="100" cy="248" r="13" fill="#9B59B6" opacity=".7"/>
+              <text x="100" y="252" text-anchor="middle" font-size="7" fill="#fff" font-family="Plus Jakarta Sans" font-weight="700">CAPILLARI</text>
+            </g>
+          </svg>
+        </div>
+        <div class="map-info" id="map-info">
+          <div class="map-info-title" id="map-title">Tocca una zona</div>
+          <ul class="map-info-list" id="map-list"><li>Clicca su cuore, polmoni, arterie, vene, sangue o capillari per vedere i concetti</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPPA DEL SAPERE -->
+    <div class="section-card">
+      <h3>🧠 Mappa del sapere</h3>
+      <div class="badges" id="badges-sapere"></div>
+    </div>
+
+    <!-- TIMER TOGGLE -->
+    <div class="toggle-row">
+      <div>
+        <div class="label">⏱ Sfida a tempo (quiz)</div>
+        <div class="hint">12 secondi per domanda — simula l'interrogazione</div>
+      </div>
+      <label class="sw"><input type="checkbox" id="timer-toggle"><span class="sw-sl"></span></label>
+    </div>
+
+    <!-- MODALITÀ -->
+    <div class="mod-grid">
+      <button class="mod-btn" onclick="startStudio()"><div class="mi">📖</div><div class="mn">Studio</div><div class="md">Leggi e impara</div></button>
+      <button class="mod-btn" onclick="startFlashcard()"><div class="mi">🃏</div><div class="mn">Flashcard</div><div class="md">Flip card</div></button>
+      <button class="mod-btn" onclick="startQuiz()"><div class="mi">🎯</div><div class="mn">Quiz</div><div class="md">Scelta multipla</div></button>
+      <button class="mod-btn" onclick="startAperte()"><div class="mi">✍️</div><div class="mn">Domande aperte</div><div class="md">Scrivi la risposta</div></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDIO ══════════════ -->
+<div id="ss" class="screen">
+  <div class="sh">
+    <button class="back" onclick="goHome()">←</button>
+    <span class="sh-title">📖 Studio</span>
+    <span class="sh-counter" id="s-counter"></span>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="s-prog" style="width:0%"></div></div>
+  <div class="inner" id="studio-content"></div>
+</div>
+
+<!-- ══════════════ FLASHCARD ══════════════ -->
+<div id="sf" class="screen">
+  <div class="sh">
+    <button class="back" onclick="goHome()">←</button>
+    <span class="sh-title">🃏 Flashcard</span>
+    <span class="sh-counter" id="fc-counter"></span>
+  </div>
+  <div class="inner">
+    <div class="srs-info" id="srs-info"></div>
+    <div class="fc-prog" id="fc-prog"></div>
+    <div class="scene" onclick="flipCard()">
+      <div class="card3d" id="card3d">
+        <div class="cface cfront"><div class="clabel">Domanda</div><div class="ctext" id="fc-front"></div><div class="chint">Tocca per girare</div></div>
+        <div class="cface cback"><div class="clabel">Risposta</div><div class="ctext" id="fc-back"></div></div>
+      </div>
+    </div>
+    <div class="fc-acts">
+      <button class="fca no" id="fc-no" onclick="fcAnswer(false)" disabled>✗ Non sapevo</button>
+      <button class="fca si" id="fc-si" onclick="fcAnswer(true)" disabled>✓ Sapevo!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ QUIZ ══════════════ -->
+<div id="sq" class="screen">
+  <div class="sh">
+    <button class="back" onclick="goHome()">←</button>
+    <span class="sh-title">🎯 Quiz</span>
+    <span class="sh-counter" id="q-counter"></span>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="q-prog" style="width:0%"></div></div>
+  <div class="inner">
+    <div class="tbar-wrap" id="tbar-wrap" style="display:none"><div class="tbar-fill" id="tbar-fill" style="width:100%"></div></div>
+    <div class="qcard">
+      <div class="qnum" id="q-num"></div>
+      <div class="qtext" id="q-text"></div>
+    </div>
+    <div class="qopts" id="q-opts"></div>
+    <div class="qfb" id="q-fb"></div>
+    <button class="btn-nq" id="btn-nq" onclick="nextQuestion()">Prossima →</button>
+  </div>
+</div>
+
+<!-- ══════════════ DOMANDE APERTE ══════════════ -->
+<div id="sa" class="screen">
+  <div class="sh">
+    <button class="back" onclick="goHome()">←</button>
+    <span class="sh-title">✍️ Domande aperte</span>
+    <span class="sh-counter" id="a-counter"></span>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="a-prog" style="width:0%"></div></div>
+  <div class="inner">
+    <div class="qcard" style="margin-bottom:14px">
+      <div class="qnum" id="a-num"></div>
+      <div class="qtext" id="a-text"></div>
+    </div>
+    <textarea class="rsp-inp" id="rsp-inp" placeholder="Scrivi la tua risposta qui…"></textarea>
+    <button class="btn-ver" onclick="verificaAperta()">Verifica ✓</button>
+    <div class="semaph" id="semaph"></div>
+    <div class="fb-det" id="fb-det"></div>
+    <div class="rif-ans" id="rif-ans"></div>
+    <button class="btn-nq" id="btn-na" onclick="nextAperta()" style="display:none">Prossima →</button>
+  </div>
+</div>
+
+<!-- ══════════════ RISULTATI ══════════════ -->
+<div id="sr" class="screen">
+  <div class="sh" style="position:relative">
+    <span class="sh-title">Risultati</span>
+  </div>
+  <div class="inner">
+    <div class="ris-hero">
+      <div class="ris-stelle" id="r-stelle"></div>
+      <div class="ris-titolo" id="r-titolo">Brava Ilaria!</div>
+      <div class="ris-msg" id="r-msg"></div>
+      <div class="ris-score" id="r-score"></div>
+    </div>
+    <div class="ris-grid">
+      <div class="ris-st"><div class="ris-sv" id="r-ok">0</div><div class="ris-sl">Corrette</div></div>
+      <div class="ris-st"><div class="ris-sv" id="r-no">0</div><div class="ris-sl">Sbagliate</div></div>
+      <div class="ris-st"><div class="ris-sv" id="r-sc">0</div><div class="ris-sl">Scadute</div></div>
+    </div>
+    <div class="err-sec" id="err-sec" style="display:none">
+      <h3>📋 Ripassiamo insieme</h3>
+      <div id="err-list"></div>
+    </div>
+    <!-- mappa sapere aggiornata -->
+    <div class="section-card" style="background:rgba(255,255,255,.08);margin-bottom:14px">
+      <h3 style="color:var(--gold-l)">🧠 Mappa del sapere aggiornata</h3>
+      <div class="badges" id="r-badges"></div>
+    </div>
+    <button class="btn-home" onclick="goHome()">🏠 Torna al progetto</button>
+    <button class="btn-att" id="btn-att" onclick="showAttestato()" style="display:none">🏆 Apri attestato (100%!)</button>
+  </div>
+</div>
+
+<!-- ══════════════ ATTESTATO ══════════════ -->
+<div id="sat" class="screen">
+  <div class="inner">
+    <div class="att-card">
+      <div class="att-trofeo">🏆</div>
+      <h1>Certificato di eccellenza</h1>
+      <div class="att-nome">Ilaria</div>
+      <div class="att-mat">Apparato Cardiocircolatorio</div>
+      <div class="att-data" id="att-data"></div>
+      <div style="font-size:36px;margin:10px 0">⭐⭐⭐</div>
+      <div style="font-size:14px;color:var(--txt-l);margin-bottom:24px">Punteggio perfetto: 100%</div>
+      <button class="btn-print no-print" onclick="window.print()">🖨 Stampa</button>
+      <button class="btn-print no-print" style="background:var(--txt-l)" onclick="goHome()">← Torna</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATI
+// ══════════════════════════════════════════
+const STUDIO = [
+  {
+    id:'s1', titolo:"L'apparato cardiocircolatorio",
+    testo:"L'apparato cardiocircolatorio ha il compito di distribuire il sangue in tutto l'organismo. Permette al sangue di raggiungere ogni cellula del corpo e comprende i vasi sanguigni (arterie, vene, capillari) e il cuore. Attraverso il sangue porta alle cellule le sostanze nutritive e l'ossigeno, e raccoglie l'anidride carbonica e le sostanze di rifiuto.",
+    parole:["vasi sanguigni","cuore","sostanze nutritive","ossigeno","anidride carbonica","sostanze di rifiuto"],
+    micro:{q:"Qual è il compito principale dell'apparato cardiocircolatorio?",
+      opzioni:["Digerire il cibo","Distribuire il sangue in tutto il corpo","Produrre i globuli rossi","Filtrare l'aria"],
+      ok:1, fb:"Esatto! Il cuore pompa il sangue che trasporta ossigeno e nutrienti a ogni cellula."}
+  },
+  {
+    id:'s2', titolo:"Il sangue",
+    testo:"Il sangue è un tessuto connettivo liquido che scorre nel nostro corpo. È composto per più della metà da plasma, un liquido giallognolo fatto principalmente di acqua. Nel plasma si trovano tre tipi di cellule: i globuli rossi (i più numerosi, a forma di disco, contengono emoglobina ricca di ferro che trasporta ossigeno e anidride carbonica); i globuli bianchi (meno numerosi, di colore bianco, difendono l'organismo da germi, batteri e virus producendo anticorpi); le piastrine (le più piccole, aiutano a riparare le ferite formando la crosta che blocca il sanguinamento).",
+    parole:["plasma","globuli rossi","emoglobina","ferro","globuli bianchi","anticorpi","piastrine","crosta"],
+    micro:{q:"Quale componente del sangue produce gli anticorpi?",
+      opzioni:["Globuli rossi","Piastrine","Globuli bianchi","Plasma"],
+      ok:2, fb:"Giusto! I globuli bianchi difendono l'organismo producendo anticorpi contro i germi."}
+  },
+  {
+    id:'s3', titolo:"Il cuore",
+    testo:"Il cuore è formato da tessuto muscolare striato involontario: lavora senza che noi ci pensiamo. È grande quanto un pugno ed è posto nel torace. Funziona come una pompa che si contrae in modo ritmico per spingere il sangue. È diviso in quattro cavità: l'atrio destro e l'atrio sinistro (nella parte superiore) e il ventricolo destro e il ventricolo sinistro (nella parte inferiore). La parte destra e quella sinistra sono separate e non comunicano tra loro perché contengono sangue diverso. Ogni atrio è collegato al ventricolo corrispondente tramite una valvola, che garantisce che il sangue scorra in un'unica direzione.",
+    parole:["muscolo involontario","quattro cavità","atrio destro","atrio sinistro","ventricolo destro","ventricolo sinistro","valvola"],
+    micro:{q:"Quante cavità ha il cuore?",
+      opzioni:["Due","Tre","Quattro","Sei"],
+      ok:2, fb:"Quattro! Atrio destro, atrio sinistro, ventricolo destro e ventricolo sinistro."}
+  },
+  {
+    id:'s4', titolo:"I vasi sanguigni",
+    testo:"I vasi sanguigni sono canali all'interno dei quali scorre il sangue, formando una rete che raggiunge ogni parte del corpo. Le arterie portano il sangue dal cuore alla periferia; sono molto robuste ed elastiche perché devono sopportare la forte pressione esercitata dal cuore. Le vene raccolgono il sangue dalla periferia e lo riportano al cuore; sono più sottili e meno elastiche delle arterie e hanno valvole interne che impediscono al sangue di tornare indietro. Le vene appaiono blu-azzurre sotto la pelle perché il sangue che trasportano è povero di ossigeno. I capillari sono vasi sottilissimi che collegano arterie e vene; in essi avvengono gli scambi di sostanze (ossigeno, nutrienti, anidride carbonica) tra sangue e cellule.",
+    parole:["arterie","vene","capillari","valvole","pressione","scambi"],
+    micro:{q:"In quale vaso avvengono gli scambi tra sangue e cellule?",
+      opzioni:["Arterie","Vene","Capillari","Aorta"],
+      ok:2, fb:"Nei capillari! Sono i vasi più sottili e permettono il passaggio di ossigeno e nutrienti alle cellule."}
+  },
+  {
+    id:'s5', titolo:"Il percorso del sangue",
+    testo:"Il sangue compie due percorsi. Piccola circolazione (cuore → polmoni → cuore): il sangue entra nell'atrio destro attraverso le vene cave, passa nel ventricolo destro ed è spinto verso i polmoni attraverso l'arteria polmonare. Negli alveoli polmonari cede l'anidride carbonica e si ricarica di ossigeno, poi torna al cuore tramite l'atrio sinistro. Grande circolazione (cuore → tutto il corpo → cuore): dall'atrio sinistro il sangue passa nel ventricolo sinistro, che lo spinge nell'aorta. L'aorta si dirama in vasi sempre più sottili che raggiungono tutte le cellule, cedono ossigeno e sostanze nutritive attraverso i capillari, e raccolgono l'anidride carbonica per riportarla al cuore.",
+    parole:["piccola circolazione","grande circolazione","vene cave","arteria polmonare","alveoli","aorta","capillari"],
+    micro:{q:"Cos'è la piccola circolazione?",
+      opzioni:["Il percorso cuore → tutto il corpo → cuore","Il percorso cuore → polmoni → cuore","Il percorso sangue → capillari","Il percorso arterie → vene"],
+      ok:1, fb:"Esatto! Nella piccola circolazione il sangue va al cuore, raggiunge i polmoni per caricare ossigeno, e torna al cuore."}
+  }
+];
+
+const FLASHCARDS = [
+  {id:'f1',  d:"Cos'è l'apparato cardiocircolatorio?", r:"Il sistema che distribuisce il sangue in tutto il corpo, composto da cuore, arterie, vene e capillari."},
+  {id:'f2',  d:"Di cosa è composto il sangue?", r:"Plasma, globuli rossi, globuli bianchi e piastrine."},
+  {id:'f3',  d:"Cosa trasportano i globuli rossi?", r:"Trasportano ossigeno (e anidride carbonica) grazie all'emoglobina, che contiene ferro."},
+  {id:'f4',  d:"Qual è la funzione dei globuli bianchi?", r:"Difendono l'organismo da germi, batteri e virus producendo anticorpi."},
+  {id:'f5',  d:"A cosa servono le piastrine?", r:"Riparano le ferite formando la crosta che blocca il sanguinamento."},
+  {id:'f6',  d:"Cos'è il plasma?", r:"La parte liquida del sangue, un liquido giallognolo composto principalmente da acqua (oltre il 50% del sangue)."},
+  {id:'f7',  d:"Quante cavità ha il cuore? Come si chiamano?", r:"Quattro: atrio destro, atrio sinistro, ventricolo destro, ventricolo sinistro."},
+  {id:'f8',  d:"Perché il cuore è un muscolo involontario?", r:"Perché batte senza che noi lo controlliamo consciamente, in modo ritmico e continuo."},
+  {id:'f9',  d:"A cosa servono le valvole del cuore?", r:"Garantiscono che il sangue scorra in un'unica direzione, impedendo che torni indietro."},
+  {id:'f10', d:"Cosa sono le arterie?", r:"Vasi sanguigni robusti ed elastici che portano il sangue dal cuore alla periferia del corpo."},
+  {id:'f11', d:"Cosa sono le vene?", r:"Vasi sanguigni che raccolgono il sangue dalla periferia e lo riportano al cuore; hanno valvole interne."},
+  {id:'f12', d:"Perché le vene sembrano blu sotto la pelle?", r:"Perché il sangue che trasportano è povero di ossigeno, quindi appare blu-azzurro."},
+  {id:'f13', d:"Cosa sono i capillari?", r:"I vasi più sottili che collegano arterie e vene; in essi avvengono gli scambi di sostanze tra sangue e cellule."},
+  {id:'f14', d:"Cos'è la piccola circolazione?", r:"Il percorso cuore → polmoni → cuore, dove il sangue cede CO₂ e si ricarica di O₂."},
+  {id:'f15', d:"Cos'è la grande circolazione?", r:"Il percorso cuore → tutto il corpo → cuore, dove il sangue porta O₂ e nutrienti a tutte le cellule."},
+  {id:'f16', d:"Cos'è l'emoglobina?", r:"Una proteina ricca di ferro contenuta nei globuli rossi che permette il trasporto di ossigeno."},
+  {id:'f17', d:"Da quale camera parte la grande circolazione?", r:"Dal ventricolo sinistro, che spinge il sangue nell'aorta."},
+  {id:'f18', d:"Cos'è l'aorta?", r:"La grande arteria che parte dal ventricolo sinistro e si dirama in vasi sempre più sottili verso tutto il corpo."}
+];
+
+const QUIZ = [
+  {id:'q1',  t:"Qual è la funzione principale dell'apparato cardiocircolatorio?",
+    o:["Digerire i cibi","Distribuire il sangue in tutto l'organismo","Produrre i globuli rossi","Filtrare l'aria nei polmoni"], ok:1,
+    fb:"L'apparato cardiocircolatorio distribuisce il sangue, che porta ossigeno e nutrienti a ogni cellula."},
+  {id:'q2',  t:"Quale componente del sangue trasporta l'ossigeno?",
+    o:["Globuli bianchi","Piastrine","Plasma","Globuli rossi"], ok:3,
+    fb:"I globuli rossi contengono emoglobina (ricca di ferro) che lega e trasporta l'ossigeno."},
+  {id:'q3',  t:"A cosa servono le piastrine?",
+    o:["Trasportare ossigeno","Produrre anticorpi","Riparare le ferite formando la crosta","Filtrare le tossine"], ok:2,
+    fb:"Le piastrine sono le cellule più piccole del sangue e si aggregano per formare la crosta sulle ferite."},
+  {id:'q4',  t:"In quante camere è diviso il cuore?",
+    o:["Due","Tre","Quattro","Cinque"], ok:2,
+    fb:"Quattro cavità: atrio destro, atrio sinistro (superiori) e ventricolo destro, ventricolo sinistro (inferiori)."},
+  {id:'q5',  t:"Quale vaso sanguigno porta il sangue dal cuore a tutto il corpo?",
+    o:["Le vene","I capillari","Le arterie","Le vene cave"], ok:2,
+    fb:"Le arterie partono dal cuore e portano il sangue ossigenato verso la periferia del corpo."},
+  {id:'q6',  t:"Cosa contengono le vene per impedire al sangue di tornare indietro?",
+    o:["Emoglobina","Piastrine","Valvole","Capillari"], ok:2,
+    fb:"Le vene hanno valvole interne che funzionano come porte a senso unico: il sangue può solo andare verso il cuore."},
+  {id:'q7',  t:"Dove avvengono gli scambi di ossigeno e nutrienti tra sangue e cellule?",
+    o:["Nelle arterie","Nelle vene","Nel cuore","Nei capillari"], ok:3,
+    fb:"I capillari sono sottilissimi: le sostanze passano facilmente attraverso le loro pareti verso le cellule."},
+  {id:'q8',  t:"Come si chiama il percorso cuore → polmoni → cuore?",
+    o:["Grande circolazione","Piccola circolazione","Circolazione linfatica","Circolazione sistemica"], ok:1,
+    fb:"La piccola circolazione porta il sangue ai polmoni per cedere CO₂ e caricare O₂, poi torna al cuore."},
+  {id:'q9',  t:"Da quale cavità del cuore parte la grande circolazione?",
+    o:["Atrio destro","Ventricolo destro","Atrio sinistro","Ventricolo sinistro"], ok:3,
+    fb:"Il ventricolo sinistro è la cavità più potente: spinge il sangue ossigenato nell'aorta verso tutto il corpo."},
+  {id:'q10', t:"Perché le arterie sono più robuste delle vene?",
+    o:["Perché trasportano sangue più freddo","Perché devono resistere alla forte pressione del cuore","Perché contengono valvole","Perché sono più lunghe"], ok:1,
+    fb:"Ogni volta che il cuore batte, spinge il sangue nelle arterie con forza: le pareti devono essere elastiche e robuste."},
+  {id:'q11', t:"Cos'è l'emoglobina?",
+    o:["Un tipo di globulo bianco","Una proteina ricca di ferro che trasporta ossigeno","Un enzima digestivo","Un tipo di plasma"], ok:1,
+    fb:"L'emoglobina è la proteina che dà il colore rosso ai globuli rossi e lega l'ossigeno per trasportarlo."},
+  {id:'q12', t:"Quale vaso porta il sangue dal ventricolo destro ai polmoni?",
+    o:["L'aorta","La vena cava","L'arteria polmonare","La vena polmonare"], ok:2,
+    fb:"L'arteria polmonare è l'unica arteria che trasporta sangue povero di ossigeno (verso i polmoni per ricaricarlo)."},
+  {id:'q13', t:"Qual è la funzione dei globuli bianchi?",
+    o:["Trasportare ossigeno","Formare la crosta sulle ferite","Difendere l'organismo da germi e virus","Costituire il plasma"], ok:2,
+    fb:"I globuli bianchi sono le cellule del sistema immunitario: combattono le infezioni producendo anticorpi."},
+  {id:'q14', t:"Cos'è il plasma?",
+    o:["Il liquido giallognolo che costituisce più della metà del sangue","Il nome scientifico dei globuli rossi","Un tipo di capillare","Il rivestimento interno delle arterie"], ok:0,
+    fb:"Il plasma è la parte liquida del sangue: è per lo più acqua e in esso sono disciolte molte sostanze nutritive."},
+  {id:'q15', t:"Da dove entra il sangue nel cuore nella piccola circolazione?",
+    o:["Dall'aorta","Dall'arteria polmonare","Dalle vene cave nell'atrio destro","Dal ventricolo sinistro"], ok:2,
+    fb:"Il sangue povero di ossigeno ritorna al cuore attraverso le vene cave, che sfociano nell'atrio destro."}
+];
+
+const APERTE = [
+  {id:'a1', t:"Descrivi la composizione del sangue.",
+    keywords:["plasma","globuli rossi","globuli bianchi","piastrine","emoglobina","ferro","anticorpi"],
+    rif:"Il sangue è composto da plasma (liquido giallognolo, >50%), globuli rossi (trasportano ossigeno grazie all'emoglobina che contiene ferro), globuli bianchi (difendono l'organismo producendo anticorpi) e piastrine (riparano le ferite formando la crosta)."},
+  {id:'a2', t:"Spiega la differenza tra arterie e vene.",
+    keywords:["arterie","cuore","periferia","robuste","elastiche","vene","valvole","meno elastiche","più sottili","blu"],
+    rif:"Le arterie portano il sangue dal cuore alla periferia: sono robuste ed elastiche per resistere alla pressione. Le vene portano il sangue dalla periferia al cuore: sono più sottili, meno elastiche, hanno valvole interne e appaiono blu sotto la pelle."},
+  {id:'a3', t:"Cosa sono i capillari e qual è la loro funzione?",
+    keywords:["capillari","sottili","arterie","vene","scambi","ossigeno","cellule","nutrienti","anidride carbonica"],
+    rif:"I capillari sono i vasi sanguigni più sottili: collegano arterie e vene. In essi avvengono gli scambi di sostanze tra sangue e cellule: l'ossigeno e i nutrienti passano dal sangue alle cellule, l'anidride carbonica passa dalle cellule al sangue."},
+  {id:'a4', t:"Descrivi il percorso del sangue nella piccola circolazione.",
+    keywords:["atrio destro","vene cave","ventricolo destro","arteria polmonare","polmoni","alveoli","ossigeno","anidride carbonica","atrio sinistro"],
+    rif:"Il sangue entra nell'atrio destro attraverso le vene cave, passa nel ventricolo destro ed è spinto verso i polmoni attraverso l'arteria polmonare. Negli alveoli polmonari cede l'anidride carbonica e si ricarica di ossigeno. Poi torna al cuore tramite l'atrio sinistro."},
+  {id:'a5', t:"Descrivi il percorso del sangue nella grande circolazione.",
+    keywords:["atrio sinistro","ventricolo sinistro","aorta","cellule","ossigeno","nutrienti","capillari","anidride carbonica","vene cave"],
+    rif:"Dall'atrio sinistro il sangue passa nel ventricolo sinistro, che lo spinge nell'aorta. L'aorta si dirama in vasi sempre più sottili che raggiungono tutte le cellule, dove cedono ossigeno e nutrienti attraverso i capillari e raccolgono l'anidride carbonica. Il sangue torna poi al cuore attraverso le vene cave."},
+  {id:'a6', t:"Quante camere ha il cuore e come si chiamano?",
+    keywords:["quattro","atrio destro","atrio sinistro","ventricolo destro","ventricolo sinistro","valvola"],
+    rif:"Il cuore ha quattro cavità: atrio destro e atrio sinistro nella parte superiore, ventricolo destro e ventricolo sinistro nella parte inferiore. Ogni atrio è collegato al ventricolo corrispondente da una valvola."},
+  {id:'a7', t:"Spiega cos'è l'emoglobina e a cosa serve.",
+    keywords:["emoglobina","ferro","globuli rossi","ossigeno","trasporta","rosso"],
+    rif:"L'emoglobina è una proteina ricca di ferro contenuta nei globuli rossi. La sua funzione è trasportare l'ossigeno dai polmoni alle cellule del corpo (e riportare l'anidride carbonica). È lei che dà il colore rosso al sangue."},
+  {id:'a8', t:"Qual è la differenza tra piccola e grande circolazione?",
+    keywords:["piccola","polmoni","ossigeno","anidride carbonica","grande","corpo","cellule","nutrienti"],
+    rif:"La piccola circolazione porta il sangue dal cuore ai polmoni per cedere l'anidride carbonica e ricaricarsi di ossigeno, poi torna al cuore. La grande circolazione porta il sangue ossigenato dal cuore a tutte le cellule del corpo per portare ossigeno e nutrienti, poi torna al cuore."}
+];
+
+const MAP_INFO = {
+  cuore:{title:"🫀 Il Cuore", lista:["Muscolo involontario striato","Grande quanto un pugno, nel torace","4 cavità: 2 atri + 2 ventricoli","Le valvole garantiscono il flusso in una direzione","Pompa il sangue ritmicamente"]},
+  polmoni:{title:"🫁 I Polmoni (piccola circolazione)", lista:["Ricevono il sangue povero di O₂","Negli alveoli avviene lo scambio gassoso","Il sangue cede CO₂ e carica O₂","Il sangue ossigenato torna all'atrio sinistro"]},
+  arterie:{title:"🔴 Le Arterie", lista:["Portano il sangue dal cuore alla periferia","Robuste ed elastiche (alta pressione)","L'aorta è la più grande","Trasportano sangue ricco di ossigeno (di solito)","L'arteria polmonare è l'eccezione"]},
+  vene:{title:"🔵 Le Vene", lista:["Portano il sangue dalla periferia al cuore","Più sottili e meno elastiche delle arterie","Hanno valvole interne (anti-reflusso)","Appaiono blu sotto la pelle (sangue povero di O₂)","Le vene cave portano il sangue all'atrio destro"]},
+  sangue:{title:"🩸 Il Sangue", lista:["Plasma: liquido giallognolo (>50%)","Globuli rossi: trasportano O₂ (emoglobina)","Globuli bianchi: difesa immunitaria, anticorpi","Piastrine: riparazione ferite, crosta"]},
+  capillari:{title:"🕸 I Capillari", lista:["I vasi più sottili del corpo","Collegano arterie e vene","Scambiano O₂ e nutrienti con le cellule","Raccolgono CO₂ dalle cellule","Raggiungono ogni angolo del corpo"]}
+};
+
+const ARGOMENTI = [
+  {id:'app', label:"Apparato circolatorio"},
+  {id:'sangue', label:"Il sangue"},
+  {id:'cuore', label:"Il cuore"},
+  {id:'vasi', label:"I vasi sanguigni"},
+  {id:'percorso', label:"Percorso del sangue"}
+];
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+const SK = 'cardio_ilaria';
+function load(){try{return JSON.parse(localStorage.getItem(SK))||{}}catch(e){return{}}}
+function save(d){localStorage.setItem(SK,JSON.stringify(d))}
+
+function getState(){
+  const d=load();
+  if(!d.sessioni) d.sessioni=0;
+  if(!d.bestScore) d.bestScore=0;
+  if(!d.argomenti) d.argomenti={};
+  if(!d.srs) d.srs={};
+  if(!d.errori) d.errori=[];
+  return d;
+}
+
+function getSRS(id){
+  const d=getState();
+  return d.srs[id]||{livello:0,ultimaRisposta:0,prossimaDa:0};
+}
+
+function setSRS(id,sapevo){
+  const d=getState();
+  if(!d.srs[id]) d.srs[id]={livello:0,ultimaRisposta:0,prossimaDa:0};
+  const s=d.srs[id];
+  const now=Date.now();
+  s.ultimaRisposta=now;
+  if(sapevo){
+    s.livello=Math.min(4,s.livello+1);
+    const days=[0,1,3,7,14];
+    s.prossimaDa=now+days[s.livello]*86400000;
+  } else {
+    s.livello=0;
+    s.prossimaDa=now;
+  }
+  d.srs[id]=s;
+  save(d);
+}
+
+function getDaRipassare(){
+  const d=getState();
+  const now=Date.now();
+  return FLASHCARDS.filter(f=>{
+    const s=d.srs[f.id];
+    return s && s.livello>0 && s.prossimaDa<=now && s.livello<4;
+  });
+}
+
+function ordineAdattivo(items){
+  const d=getState();
+  const now=Date.now();
+  const score=i=>{
+    const s=d.srs[i.id];
+    if(!s) return 2; // mai risposta
+    if(s.prossimaDa<=now && s.livello<4) return 0; // scaduta
+    if(d.errori.includes(i.id)) return 1; // con errori
+    if(s.livello>=4) return 4; // padroneggiata
+    return 3;
+  };
+  return [...items].sort((a,b)=>score(a)-score(b));
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function mapClick(zone){
+  const info=MAP_INFO[zone];
+  document.getElementById('map-title').textContent=info.title;
+  const ul=document.getElementById('map-list');
+  ul.innerHTML=info.lista.map(x=>`<li>${x}</li>`).join('');
+  // highlight
+  document.querySelectorAll('.map-zone').forEach(z=>{
+    z.style.opacity=z.dataset.zone===zone?'1':'0.5';
+  });
+}
+
+function getBadgeClass(z){
+  const d=getState();
+  const st=d.argomenti[z]||'rosso';
+  return st;
+}
+
+function renderBadges(container){
+  const el=document.getElementById(container);
+  if(!el) return;
+  el.innerHTML=ARGOMENTI.map(a=>{
+    const cls=getBadgeClass(a.id);
+    const ico=cls==='verde'?'🟢':cls==='giallo'?'🟡':'🔴';
+    return `<span class="badge ${cls}">${ico} ${a.label}</span>`;
+  }).join('');
+}
+
+function updateMapColors(){
+  const d=getState();
+  const zoneMap={app:'cuore',sangue:'sangue',cuore:'cuore',vasi:'arterie',percorso:'polmoni'};
+  // color map zones based on argomenti
+  Object.entries(zoneMap).forEach(([arg,zone])=>{
+    const st=d.argomenti[arg]||'rosso';
+    const el=document.querySelector(`#mz-${zone} ellipse, #mz-${zone} circle`);
+    if(el){
+      if(st==='verde') el.style.fill='#2D6A4F';
+      else if(st==='giallo') el.style.fill='#D4900A';
+    }
+  });
+}
+
+function updateStats(){
+  const d=getState();
+  document.getElementById('st-sessioni').textContent=d.sessioni||0;
+  document.getElementById('st-best').textContent=d.bestScore?d.bestScore+'%':'—';
+  const rip=getDaRipassare().length;
+  document.getElementById('st-ripasso').textContent=rip;
+  document.getElementById('rip-count').textContent=rip;
+  renderBadges('badges-sapere');
+  updateMapColors();
+}
+
+function goHome(){
+  updateStats();
+  show('sp');
+}
+
+// ══════════════════════════════════════════
+// STUDIO
+// ══════════════════════════════════════════
+let studioIdx=0;
+let studioAnswered=[];
+
+function startStudio(){
+  studioIdx=0;
+  studioAnswered=new Array(STUDIO.length).fill(false);
+  renderStudio();
+  show('ss');
+}
+
+function renderStudio(){
+  const b=STUDIO[studioIdx];
+  document.getElementById('s-counter').textContent=`${studioIdx+1}/${STUDIO.length}`;
+  document.getElementById('s-prog').style.width=((studioIdx/STUDIO.length)*100)+'%';
+
+  let html=`<div class="blk">
+    <div class="blk-num">Blocco ${studioIdx+1} di ${STUDIO.length}</div>
+    <div class="blk-title">${b.titolo}</div>
+    <div class="blk-txt">${b.testo}</div>
+    <div class="chips">${b.parole.map(p=>`<span class="chip">${p}</span>`).join('')}</div>
+    <div class="micro">
+      <div class="micro-q">🤔 ${b.micro.q}</div>
+      <div class="micro-opts">
+        ${b.micro.opzioni.map((o,i)=>`<button class="mo" onclick="microAnswer(${i})">${o}</button>`).join('')}
+      </div>
+      <div class="micro-fb" id="micro-fb-${studioIdx}"></div>
+      <button class="btn-avanti" id="btn-avanti-${studioIdx}" onclick="nextBlocco()">Avanti →</button>
+    </div>
+  </div>`;
+
+  if(studioIdx<STUDIO.length-1){
+    html+=`<div class="blk blk-locked" id="blk-next">
+      <div class="blk-num">Blocco ${studioIdx+2} di ${STUDIO.length}</div>
+      <div class="blk-title">${STUDIO[studioIdx+1].titolo}</div>
+      <div style="font-size:14px;color:var(--txt-l);margin-top:8px">🔒 Rispondi alla domanda qui sopra per sbloccare</div>
+    </div>`;
+  }
+
+  document.getElementById('studio-content').innerHTML=html;
+}
+
+function microAnswer(idx){
+  const b=STUDIO[studioIdx];
+  const btns=document.querySelectorAll('.mo');
+  btns.forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===b.micro.ok) btn.classList.add('ok');
+    else if(i===idx && idx!==b.micro.ok) btn.classList.add('no');
+  });
+  const fb=document.getElementById(`micro-fb-${studioIdx}`);
+  fb.style.display='block';
+  fb.textContent=(idx===b.micro.ok?'✅ ':'❌ ')+b.micro.fb;
+  const btn=document.getElementById(`btn-avanti-${studioIdx}`);
+  btn.style.display='block';
+  const next=document.getElementById('blk-next');
+  if(next) next.classList.remove('blk-locked');
+}
+
+function nextBlocco(){
+  studioIdx++;
+  if(studioIdx>=STUDIO.length){
+    // studio completato
+    const d=getState();
+    ARGOMENTI.forEach(a=>{ if(!d.argomenti[a.id]||d.argomenti[a.id]==='rosso') d.argomenti[a.id]='giallo'; });
+    save(d);
+    toast('📖 Studio completato! Ora esercitati con quiz e flashcard.');
+    goHome();
+    return;
+  }
+  renderStudio();
+}
+
+// ══════════════════════════════════════════
+// FLASHCARD
+// ══════════════════════════════════════════
+let fcQueue=[];
+let fcIdx=0;
+let fcFlipped=false;
+let fcCorretti=0;
+
+function startFlashcard(ripassoSolo=false){
+  const daRip=getDaRipassare();
+  if(ripassoSolo && daRip.length===0){ toast('Nessuna carta da ripassare oggi!'); return; }
+  const base=ripassoSolo?daRip:ordineAdattivo(FLASHCARDS);
+  fcQueue=base;
+  fcIdx=0; fcCorretti=0; fcFlipped=false;
+  renderFC();
+  show('sf');
+}
+
+function renderFC(){
+  if(fcIdx>=fcQueue.length){ endFlashcard(); return; }
+  const c=fcQueue[fcIdx];
+  const daRip=getDaRipassare();
+  document.getElementById('fc-counter').textContent=`${fcIdx+1}/${fcQueue.length}`;
+  document.getElementById('fc-prog').textContent=`Completate: ${fcIdx} | Corrette: ${fcCorretti}`;
+  if(daRip.length>0) document.getElementById('srs-info').textContent=`📅 ${daRip.length} carte in scadenza oggi`;
+  else document.getElementById('srs-info').textContent='✅ Nessuna carta scaduta oggi';
+  document.getElementById('fc-front').textContent=c.d;
+  document.getElementById('fc-back').textContent=c.r;
+  fcFlipped=false;
+  document.getElementById('card3d').classList.remove('flip');
+  document.getElementById('fc-no').disabled=true;
+  document.getElementById('fc-si').disabled=true;
+}
+
+function flipCard(){
+  if(fcFlipped) return;
+  fcFlipped=true;
+  document.getElementById('card3d').classList.add('flip');
+  setTimeout(()=>{
+    document.getElementById('fc-no').disabled=false;
+    document.getElementById('fc-si').disabled=false;
+  },300);
+}
+
+function fcAnswer(sapevo){
+  const c=fcQueue[fcIdx];
+  setSRS(c.id,sapevo);
+  if(sapevo) fcCorretti++;
+  else {
+    const d=getState();
+    if(!d.errori.includes(c.id)) d.errori.push(c.id);
+    save(d);
+  }
+  fcIdx++;
+  renderFC();
+}
+
+function endFlashcard(){
+  const pct=Math.round((fcCorretti/fcQueue.length)*100);
+  showRisultati('flashcard',fcCorretti,fcQueue.length-fcCorretti,0,[]);
+}
+
+// ══════════════════════════════════════════
+// QUIZ
+// ══════════════════════════════════════════
+let qQueue=[];
+let qIdx=0;
+let qCorretti=0;
+let qSbagliati=[];
+let qScadute=0;
+let timerInterval=null;
+let timerSec=12;
+let qAnswered=false;
+
+function startQuiz(ripassoSolo=false){
+  const base=ripassoSolo
+    ?QUIZ.filter(q=>{const d=getState();return d.errori.includes(q.id);})
+    :ordineAdattivo(QUIZ);
+  if(ripassoSolo && base.length===0){ toast('Nessuna domanda da ripassare!'); return; }
+  qQueue=base;
+  qIdx=0; qCorretti=0; qSbagliati=[]; qScadute=0;
+  renderQuiz();
+  show('sq');
+}
+
+function renderQuiz(){
+  if(qIdx>=qQueue.length){ endQuiz(); return; }
+  const q=qQueue[qIdx];
+  qAnswered=false;
+  document.getElementById('q-counter').textContent=`${qIdx+1}/${qQueue.length}`;
+  document.getElementById('q-prog').style.width=((qIdx/qQueue.length)*100)+'%';
+  document.getElementById('q-num').textContent=`Domanda ${qIdx+1}`;
+  document.getElementById('q-text').textContent=q.t;
+  document.getElementById('q-fb').style.display='none';
+  document.getElementById('btn-nq').style.display='none';
+
+  const letters=['A','B','C','D'];
+  document.getElementById('q-opts').innerHTML=q.o.map((o,i)=>
+    `<button class="qo" onclick="quizAnswer(${i})"><span class="lt">${letters[i]}</span>${o}</button>`
+  ).join('');
+
+  // timer
+  if(document.getElementById('timer-toggle').checked){
+    document.getElementById('tbar-wrap').style.display='block';
+    startTimer();
+  } else {
+    document.getElementById('tbar-wrap').style.display='none';
+  }
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerSec=12;
+  const bar=document.getElementById('tbar-fill');
+  bar.style.transition='none';
+  bar.style.width='100%';
+  bar.className='tbar-fill';
+  setTimeout(()=>{
+    bar.style.transition='width 1s linear';
+  },50);
+
+  timerInterval=setInterval(()=>{
+    timerSec--;
+    const pct=(timerSec/12)*100;
+    bar.style.width=pct+'%';
+    if(timerSec<=4) bar.className='tbar-fill d';
+    else if(timerSec<=7) bar.className='tbar-fill w';
+    if(timerSec<=0){
+      clearInterval(timerInterval);
+      quizAnswer(-1); // scaduta
+    }
+  },1000);
+}
+
+function quizAnswer(idx){
+  if(qAnswered) return;
+  qAnswered=true;
+  clearInterval(timerInterval);
+  const q=qQueue[qIdx];
+  const opts=document.querySelectorAll('.qo');
+  opts.forEach((o,i)=>{
+    o.disabled=true;
+    if(i===q.ok) o.classList.add('ok');
+    else if(i===idx && idx!==q.ok) o.classList.add('no');
+  });
+
+  if(idx===q.ok){
+    qCorretti++;
+    setSRS(q.id,true);
+    const d=getState();
+    d.errori=d.errori.filter(e=>e!==q.id);
+    save(d);
+  } else {
+    if(idx===-1) qScadute++;
+    else qSbagliati.push({d:q.t,a:q.o[q.ok]});
+    setSRS(q.id,false);
+    const d=getState();
+    if(!d.errori.includes(q.id)) d.errori.push(q.id);
+    save(d);
+  }
+
+  const fb=document.getElementById('q-fb');
+  fb.style.display='block';
+  fb.textContent=(idx===q.ok?'✅ ':'❌ ')+q.fb;
+  document.getElementById('btn-nq').style.display='block';
+}
+
+function nextQuestion(){
+  qIdx++;
+  renderQuiz();
+}
+
+function endQuiz(){
+  // aggiorna argomenti
+  const pct=Math.round((qCorretti/qQueue.length)*100);
+  const d=getState();
+  ARGOMENTI.forEach(a=>{
+    const cur=d.argomenti[a.id]||'rosso';
+    if(pct>=80){ if(cur!=='verde') d.argomenti[a.id]='giallo'; }
+    if(pct>=90) d.argomenti[a.id]='verde';
+    else if(pct>=60 && cur==='rosso') d.argomenti[a.id]='giallo';
+  });
+  save(d);
+  showRisultati('quiz',qCorretti,qQueue.length-qCorretti-qScadute,qScadute,qSbagliati);
+}
+
+// ══════════════════════════════════════════
+// DOMANDE APERTE
+// ══════════════════════════════════════════
+let aQueue=[];
+let aIdx=0;
+let aCorretti=0;
+let aSbagliati=[];
+
+function startAperte(ripassoSolo=false){
+  aQueue=ordineAdattivo(APERTE);
+  aIdx=0; aCorretti=0; aSbagliati=[];
+  renderAperta();
+  show('sa');
+}
+
+function renderAperta(){
+  if(aIdx>=aQueue.length){ endAperte(); return; }
+  const a=aQueue[aIdx];
+  document.getElementById('a-counter').textContent=`${aIdx+1}/${aQueue.length}`;
+  document.getElementById('a-prog').style.width=((aIdx/aQueue.length)*100)+'%';
+  document.getElementById('a-num').textContent=`Domanda ${aIdx+1}`;
+  document.getElementById('a-text').textContent=a.t;
+  document.getElementById('rsp-inp').value='';
+  document.getElementById('semaph').style.display='none';
+  document.getElementById('fb-det').style.display='none';
+  document.getElementById('rif-ans').style.display='none';
+  document.getElementById('btn-na').style.display='none';
+}
+
+function normalizza(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[àáâã]/g,'a').replace(/[èéêë]/g,'e')
+    .replace(/[ìíîï]/g,'i').replace(/[òóôõ]/g,'o')
+    .replace(/[ùúûü]/g,'u')
+    .replace(/[^a-z0-9\s]/g,' ');
+}
+
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>[i]);
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function matchKeyword(risposta, kw){
+  const r=normalizza(risposta), k=normalizza(kw);
+  if(r.includes(k)) return true;
+  const words=r.split(/\s+/);
+  for(const w of words){
+    if(w.length>3 && levenshtein(w,k)<=Math.floor(k.length*0.2)) return true;
+  }
+  return false;
+}
+
+function verificaAperta(){
+  const a=aQueue[aIdx];
+  const risposta=document.getElementById('rsp-inp').value.trim();
+  if(!risposta){ toast('Scrivi qualcosa prima!'); return; }
+
+  const trovate=a.keywords.filter(k=>matchKeyword(risposta,k));
+  const pct=Math.round((trovate.length/a.keywords.length)*100);
+
+  const semaph=document.getElementById('semaph');
+  semaph.style.display='flex';
+  if(pct>=75){ semaph.className='semaph v'; semaph.textContent=`🟢 Ottimo! ${pct}% delle parole chiave presenti`; aCorretti++; setSRS(a.id,true); }
+  else if(pct>=40){ semaph.className='semaph g'; semaph.textContent=`🟡 Quasi! ${pct}% delle parole chiave presenti`; setSRS(a.id,false); aSbagliati.push({d:a.t,a:a.rif}); }
+  else { semaph.className='semaph r'; semaph.textContent=`🔴 Da ripassare: ${pct}% delle parole chiave presenti`; setSRS(a.id,false); aSbagliati.push({d:a.t,a:a.rif}); }
+
+  const mancanti=a.keywords.filter(k=>!matchKeyword(risposta,k));
+  const fb=document.getElementById('fb-det');
+  fb.style.display='block';
+  fb.innerHTML=`<b>Hai menzionato:</b> ${trovate.length>0?trovate.map(k=>`<em>${k}</em>`).join(', '):'—'}<br><b>Avresti potuto aggiungere:</b> ${mancanti.length>0?mancanti.map(k=>`<em>${k}</em>`).join(', '):'niente, ottimo!'}`;
+
+  const rif=document.getElementById('rif-ans');
+  rif.style.display='block';
+  rif.innerHTML=`<b>Risposta completa:</b> ${a.rif}`;
+
+  document.getElementById('btn-na').style.display='block';
+}
+
+function nextAperta(){
+  aIdx++;
+  renderAperta();
+}
+
+function endAperte(){
+  showRisultati('aperte',aCorretti,aSbagliati.length,0,aSbagliati);
+}
+
+// ══════════════════════════════════════════
+// RIPASSO VELOCE
+// ══════════════════════════════════════════
+function startRipasso(){
+  const rip=getDaRipassare();
+  if(rip.length===0){ toast('✅ Nessuna flashcard in scadenza oggi!'); return; }
+  fcQueue=rip;
+  fcIdx=0; fcCorretti=0; fcFlipped=false;
+  renderFC();
+  show('sf');
+}
+
+// ══════════════════════════════════════════
+// RISULTATI
+// ══════════════════════════════════════════
+function showRisultati(tipo,ok,no,sc,errori){
+  const tot=ok+no+sc;
+  const pct=tot>0?Math.round((ok/tot)*100):0;
+
+  // aggiorna stats globali
+  const d=getState();
+  d.sessioni=(d.sessioni||0)+1;
+  if(pct>d.bestScore) d.bestScore=pct;
+  save(d);
+
+  // stelle e messaggio
+  let stelle,msg;
+  if(pct>=90){ stelle='⭐⭐⭐'; msg='Straordinaria! Sei pronta per l\'interrogazione!'; }
+  else if(pct>=70){ stelle='⭐⭐'; msg='Brava! Ancora un po\' di ripasso e sarà perfetto.'; }
+  else if(pct>=50){ stelle='⭐'; msg='Buon inizio! Ripassiamo insieme le risposte sbagliate.'; }
+  else { stelle='💪'; msg='Ci vuole ancora un po\' di studio, ce la fai!'; }
+
+  document.getElementById('r-stelle').textContent=stelle;
+  document.getElementById('r-titolo').textContent=pct>=90?'Bravissima Ilaria!':'Brava Ilaria!';
+  document.getElementById('r-msg').textContent=msg;
+  document.getElementById('r-score').textContent=pct+'%';
+  document.getElementById('r-ok').textContent=ok;
+  document.getElementById('r-no').textContent=no;
+  document.getElementById('r-sc').textContent=sc;
+
+  // errori
+  const errSec=document.getElementById('err-sec');
+  if(errori.length>0){
+    errSec.style.display='block';
+    document.getElementById('err-list').innerHTML=errori.map(e=>
+      `<div class="err-item"><div class="err-q">${e.d}</div><div class="err-a">✓ ${e.a}</div></div>`
+    ).join('');
+  } else { errSec.style.display='none'; }
+
+  // attestato
+  document.getElementById('btn-att').style.display=pct===100?'block':'none';
+
+  renderBadges('r-badges');
+  show('sr');
+}
+
+function showAttestato(){
+  const now=new Date();
+  document.getElementById('att-data').textContent=now.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+  show('sat');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+updateStats();
+</script>
+</body>
+</html>
