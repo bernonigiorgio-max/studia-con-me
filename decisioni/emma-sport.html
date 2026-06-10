@@ -417,11 +417,60 @@
     text-align: center;
     line-height: 1.8;
   }
+
+  .back-link {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .back-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Firefox slider thumbs */
+  .score-slider::-moz-range-thumb {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  .score-slider.p::-moz-range-thumb { background: var(--pallavolo); }
+  .score-slider.a::-moz-range-thumb { background: var(--atletica); }
+  .weight-slider::-moz-range-thumb {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  /* Mobile: la griglia a 4 colonne fisse non entra in un telefono */
+  @media (max-width: 600px) {
+    .col-headers { display: none; }
+    .row { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .row-label { grid-column: 1 / -1; font-size: 14px; }
+    .score-slider, .weight-slider { width: 100%; height: 5px; }
+    .verdict-scores { flex-direction: column; align-items: stretch; gap: 10px; }
+  }
+
+  /* Touch: pollici degli slider più grandi da prendere col dito */
+  @media (pointer: coarse) {
+    .score-slider::-webkit-slider-thumb, .weight-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
+    .score-slider::-moz-range-thumb, .weight-slider::-moz-range-thumb { width: 22px; height: 22px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
+  <a class="back-link" href="./">← Tutte le decisioni</a>
   <h1>Emma — Scelta dello Sport</h1>
   <p>Pallavolo U12 vs Atletica Leggera · Voti e pesi tutti modificabili</p>
 </header>
@@ -598,8 +647,8 @@ function render() {
       <div class="cat-icon"></div>
       <div class="cat-label">${cat.label}</div>
       <div class="cat-subtotal">
-        <span class="cat-sub-p">${subP}</span>
-        <span class="cat-sub-a">${subA}</span>
+        <span class="cat-sub-p" id="cat-sub-p-${cat.id}">${subP}</span>
+        <span class="cat-sub-a" id="cat-sub-a-${cat.id}">${subA}</span>
       </div>
       <div class="cat-toggle ${openCats[cat.id] ? 'open' : ''}">▶</div>
     `;
@@ -627,8 +676,8 @@ function render() {
           ${item.label}
           ${item.note ? `<small>${item.note}</small>` : ''}
           <div class="wcontrib">
-            <span class="wc-p">P:${wcP}</span>
-            <span class="wc-a">A:${wcA}</span>
+            <span class="wc-p" id="wc-p-${item.id}">P:${wcP}</span>
+            <span class="wc-a" id="wc-a-${item.id}">A:${wcA}</span>
           </div>
         </div>
 
@@ -639,6 +688,7 @@ function render() {
           </div>
           <input type="range" class="score-slider p" min="1" max="5" step="1"
             value="${s.vP}" data-id="${item.id}" data-field="vP"
+            aria-label="Voto Pallavolo — ${item.label}"
             style="background:${sliderGradientP(s.vP)}">
           <span class="cell-label">Voto Pallavolo</span>
         </div>
@@ -650,6 +700,7 @@ function render() {
           </div>
           <input type="range" class="score-slider a" min="1" max="5" step="1"
             value="${s.vA}" data-id="${item.id}" data-field="vA"
+            aria-label="Voto Atletica — ${item.label}"
             style="background:${sliderGradientA(s.vA)}">
           <span class="cell-label">Voto Atletica</span>
         </div>
@@ -661,6 +712,7 @@ function render() {
           </div>
           <input type="range" class="weight-slider" min="1" max="5" step="1"
             value="${s.w}" data-id="${item.id}" data-field="w"
+            aria-label="Importanza — ${item.label}"
             style="background:${sliderGradientW(s.w)}">
           <span class="cell-label">Importanza</span>
         </div>
@@ -681,13 +733,11 @@ function render() {
           if (field === 'vA') e.target.style.background = sliderGradientA(val);
           if (field === 'w')  e.target.style.background = sliderGradientW(val);
 
-          // update badge
-          if (field === 'vP') document.getElementById(`badge-p-${id}`).textContent = val;
-          if (field === 'vA') document.getElementById(`badge-a-${id}`).textContent = val;
-          if (field === 'w')  document.getElementById(`wbadge-${id}`).textContent = val;
-
-          // full re-render only for badge highlight + subtotals + verdict
-          render();
+          // aggiornamenti mirati senza ricostruire il DOM:
+          // un render() completo qui distruggerebbe lo slider a metà trascinamento
+          updateRow(id);
+          updateCatSubtotal(itemCat[id]);
+          updateTotals();
         });
       });
     });
@@ -698,6 +748,34 @@ function render() {
   });
 
   updateTotals();
+}
+
+const itemCat = {};
+categories.forEach(cat => cat.items.forEach(item => { itemCat[item.id] = cat.id; }));
+
+function updateRow(id) {
+  const s = state[id];
+  const badgeP = document.getElementById(`badge-p-${id}`);
+  const badgeA = document.getElementById(`badge-a-${id}`);
+  badgeP.textContent = s.vP;
+  badgeA.textContent = s.vA;
+  badgeP.classList.toggle('best', s.vP > s.vA);
+  badgeA.classList.toggle('best', s.vA > s.vP);
+  document.getElementById(`wbadge-${id}`).textContent = s.w;
+  document.getElementById(`wc-p-${id}`).textContent = 'P:' + s.vP * s.w;
+  document.getElementById(`wc-a-${id}`).textContent = 'A:' + s.vA * s.w;
+}
+
+function updateCatSubtotal(catId) {
+  const cat = categories.find(c => c.id === catId);
+  let subP = 0, subA = 0;
+  cat.items.forEach(item => {
+    const s = state[item.id];
+    subP += s.vP * s.w;
+    subA += s.vA * s.w;
+  });
+  document.getElementById(`cat-sub-p-${catId}`).textContent = subP;
+  document.getElementById(`cat-sub-a-${catId}`).textContent = subA;
 }
 
 function updateTotals() {
