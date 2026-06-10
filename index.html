@@ -3,38 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudiaConMe</title>
+<meta name="theme-color" content="#faf7f0">
+<title>📚 StudiaConMe</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
-  h1 { font-size: 2rem; color: #1a1a2e; margin-bottom: 8px; }
-  .subtitle { color: #555; margin-bottom: 40px; }
-  .cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
-  .card { background: white; border-radius: 20px; padding: 40px 32px; text-align: center; width: 260px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }
-  .card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.14); }
-  .card .emoji { font-size: 4rem; display: block; margin-bottom: 16px; }
-  .card h2 { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 8px; }
-  .card p { color: #777; font-size: 0.9rem; }
-  .card.ilaria { border-top: 5px solid #7c3aed; }
-  .card.emma { border-top: 5px solid #db2777; }
-  footer { margin-top: 60px; color: #aaa; font-size: 0.8rem; }
+  :root{
+    --paper:#faf7f0; --ink:#2c2418; --ink-soft:#6b5d49; --ink-faint:#a89a85;
+    --card:#fffdf8; --line:rgba(107,93,73,.14);
+    --ilaria:#7c3aed; --ilaria-soft:#f1eafe; --ilaria-deep:#5b21b6;
+    --emma:#db2777; --emma-soft:#fdeaf3; --emma-deep:#9d174d;
+    --decide:#0f766e; --decide-soft:#e4f3f1;
+    --shadow:0 2px 6px rgba(44,36,24,.06), 0 14px 34px rgba(44,36,24,.10);
+    --shadow-lift:0 4px 10px rgba(44,36,24,.08), 0 22px 48px rgba(44,36,24,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:26px 26px;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:clamp(32px,7vh,72px) 20px 40px;
+    overflow-x:hidden;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .eyebrow{
+    font-size:.78rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:14px;
+    animation:rise .5s ease backwards;
+  }
+  h1{
+    font-family:'Fraunces',Georgia,serif; font-weight:700;
+    font-size:clamp(2.4rem,7vw,3.6rem); line-height:1.05; text-align:center;
+    letter-spacing:-.02em; margin-bottom:14px;
+    animation:rise .5s .06s ease backwards;
+  }
+  h1 .hl{position:relative;white-space:nowrap}
+  h1 .hl::after{
+    content:''; position:absolute; left:-2%; right:-2%; bottom:.08em; height:.38em;
+    background:linear-gradient(100deg,#fcd34d 0%,#fbbf24 100%);
+    border-radius:3px; z-index:-1; transform:rotate(-1deg); opacity:.75;
+  }
+  .subtitle{
+    color:var(--ink-soft); font-size:1rem; text-align:center; max-width:34ch;
+    line-height:1.6; margin-bottom:clamp(36px,6vh,56px);
+    animation:rise .5s .12s ease backwards;
+  }
+  .subtitle em{font-family:'Fraunces',serif;font-style:italic}
+
+  .cards{display:flex;gap:clamp(20px,4vw,36px);flex-wrap:wrap;justify-content:center;margin-bottom:clamp(36px,6vh,56px)}
+  .card{
+    position:relative; background:var(--card); width:272px;
+    padding:46px 28px 30px; text-align:center; text-decoration:none; color:inherit;
+    border-radius:6px; border:1px solid rgba(107,93,73,.12);
+    box-shadow:var(--shadow);
+    transition:transform .28s cubic-bezier(.34,1.4,.5,1), box-shadow .28s;
+  }
+  .card.ilaria{transform:rotate(-1.6deg);animation:rise .55s .2s ease backwards}
+  .card.emma{transform:rotate(1.4deg);animation:rise .55s .3s ease backwards}
+  .card:hover,.card:focus-visible{transform:rotate(0) translateY(-7px);box-shadow:var(--shadow-lift)}
+  .card:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+  /* washi tape */
+  .card::before{
+    content:''; position:absolute; top:-13px; left:50%; width:96px; height:28px;
+    transform:translateX(-50%) rotate(-2.5deg); opacity:.85;
+    background:repeating-linear-gradient(115deg, var(--tape) 0 9px, color-mix(in srgb, var(--tape) 78%, white) 9px 18px);
+    box-shadow:0 1px 3px rgba(44,36,24,.15);
+  }
+  .card.ilaria{--tape:#c4b0f5}
+  .card.emma{--tape:#f5b0d2}
+  .card .emoji{
+    font-size:3.4rem; line-height:1; display:flex; align-items:center; justify-content:center;
+    width:104px; height:104px; margin:0 auto 18px; border-radius:50%;
+  }
+  .card.ilaria .emoji{background:var(--ilaria-soft)}
+  .card.emma .emoji{background:var(--emma-soft)}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.9rem;letter-spacing:-.01em;margin-bottom:4px}
+  .card.ilaria h2{color:var(--ilaria-deep)}
+  .card.emma h2{color:var(--emma-deep)}
+  .card .grade{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:1rem;margin-bottom:16px}
+  .card .meta{
+    display:inline-block; font-size:.76rem; font-weight:700; letter-spacing:.04em;
+    padding:6px 14px; border-radius:30px;
+  }
+  .card.ilaria .meta{background:var(--ilaria-soft);color:var(--ilaria-deep)}
+  .card.emma .meta{background:var(--emma-soft);color:var(--emma-deep)}
+  .card .go{
+    display:block; margin-top:18px; font-size:.86rem; font-weight:700;
+    color:var(--ink-faint); transition:color .2s, letter-spacing .2s;
+  }
+  .card:hover .go{letter-spacing:.03em}
+  .card.ilaria:hover .go{color:var(--ilaria)}
+  .card.emma:hover .go{color:var(--emma)}
+
+  .tools{
+    display:flex; align-items:center; gap:16px; max-width:560px; width:100%;
+    background:var(--card); border:1px dashed rgba(15,118,110,.45); border-radius:14px;
+    padding:18px 22px; text-decoration:none; color:inherit;
+    box-shadow:0 2px 8px rgba(44,36,24,.05);
+    transition:transform .22s, box-shadow .22s, border-color .22s;
+    animation:rise .55s .4s ease backwards;
+  }
+  .tools:hover,.tools:focus-visible{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--decide)}
+  .tools:focus-visible{outline:3px solid var(--decide);outline-offset:3px}
+  .tools .t-emoji{
+    flex-shrink:0; width:52px; height:52px; border-radius:13px; background:var(--decide-soft);
+    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+  }
+  .tools .t-body{flex:1;min-width:0}
+  .tools h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.12rem;color:var(--decide);margin-bottom:2px}
+  .tools p{font-size:.82rem;color:var(--ink-soft);line-height:1.5}
+  .tools .t-arrow{flex-shrink:0;color:var(--decide);font-size:1.2rem;transition:transform .2s}
+  .tools:hover .t-arrow{transform:translateX(4px)}
+
+  footer{
+    margin-top:auto; padding-top:clamp(40px,7vh,64px);
+    color:var(--ink-faint); font-size:.78rem; text-align:center; line-height:1.8;
+  }
+  footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-faint)}
+  footer a:hover{color:var(--ink)}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
 </style>
 </head>
 <body>
-  <h1>📚 StudiaConMe</h1>
-  <p class="subtitle">Le app di studio di Ilaria ed Emma</p>
+  <div class="eyebrow">Il quaderno digitale di famiglia</div>
+  <h1>📚 Studia<span class="hl">ConMe</span></h1>
+  <p class="subtitle">Le app di studio di <em>Ilaria</em> ed <em>Emma</em> — fatte in casa, si aprono nel browser da qualsiasi dispositivo.</p>
+
   <div class="cards">
     <a href="ilaria/" class="card ilaria">
       <span class="emoji">👧</span>
       <h2>Ilaria</h2>
-      <p>5ª Elementare</p>
+      <p class="grade">5ª elementare</p>
+      <span class="meta">🔬 2 app di Scienze</span>
+      <span class="go">Apri le sue app →</span>
     </a>
     <a href="emma/" class="card emma">
       <span class="emoji">👩</span>
       <h2>Emma</h2>
-      <p>3ª Elementare</p>
+      <p class="grade">3ª elementare</p>
+      <span class="meta">✨ App in arrivo</span>
+      <span class="go">Apri le sue app →</span>
     </a>
   </div>
-  <footer>© Giorgio Bernoni — github.com/bernonigiorgio-max/studia-con-me</footer>
+
+  <a href="decisioni/" class="tools">
+    <span class="t-emoji">⚖️</span>
+    <span class="t-body">
+      <h3>Decisioni Ponderate</h3>
+      <p>Gli strumenti della famiglia per scegliere bene: criteri, voti e pesi — il verdetto si aggiorna in tempo reale.</p>
+    </span>
+    <span class="t-arrow">→</span>
+  </a>
+
+  <footer>
+    © Giorgio Bernoni · <a href="https://github.com/bernonigiorgio-max/studia-con-me">github.com/bernonigiorgio-max/studia-con-me</a>
+  </footer>
 </body>
 </html>

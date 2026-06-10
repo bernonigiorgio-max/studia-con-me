@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf7f0">
+<title>⚖️ Decisioni Ponderate</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#faf7f0; --ink:#2c2418; --ink-soft:#6b5d49; --ink-faint:#a89a85;
+    --card:#fffdf8; --line:rgba(107,93,73,.14);
+    --teal:#0f766e; --teal-deep:#115e59; --teal-soft:#e4f3f1;
+    --gold:#b45309; --gold-soft:#fdf3e3;
+    --shadow:0 2px 6px rgba(44,36,24,.06), 0 12px 28px rgba(44,36,24,.09);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:26px 26px;
+    min-height:100vh; padding:clamp(26px,5vh,48px) 20px 56px;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .wrap{max-width:700px;margin:0 auto}
+  .back{
+    display:inline-flex; align-items:center; gap:7px;
+    color:var(--ink-soft); text-decoration:none; font-size:.86rem; font-weight:600;
+    padding:8px 14px; border-radius:30px; background:var(--card);
+    border:1px solid rgba(107,93,73,.16); margin-bottom:26px;
+    transition:transform .2s, color .2s, border-color .2s;
+    animation:rise .45s ease backwards;
+  }
+  .back:hover{transform:translateX(-3px);color:var(--teal-deep);border-color:var(--teal)}
+  .back:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+  .hero{margin-bottom:14px;animation:rise .5s .06s ease backwards}
+  .hero h1{
+    font-family:'Fraunces',Georgia,serif; font-weight:700; letter-spacing:-.02em;
+    font-size:clamp(1.9rem,6vw,2.6rem); color:var(--teal-deep); line-height:1.12;
+  }
+  .lede{
+    color:var(--ink-soft); font-size:.96rem; line-height:1.65; max-width:56ch;
+    margin-bottom:26px; animation:rise .5s .12s ease backwards;
+  }
+  .formula{
+    display:inline-block; font-family:'Fraunces',serif; font-style:italic;
+    background:var(--gold-soft); color:var(--gold); border-radius:8px; padding:1px 9px;
+    white-space:nowrap;
+  }
+
+  .how{
+    background:var(--card); border:1px solid rgba(107,93,73,.12); border-radius:14px;
+    padding:16px 20px; margin-bottom:30px; box-shadow:var(--shadow);
+    font-size:.86rem; color:var(--ink-soft); line-height:1.7;
+    animation:rise .5s .18s ease backwards;
+  }
+  .how b{color:var(--ink)}
+
+  h2.sec{
+    font-family:'Fraunces',serif; font-weight:600; font-size:1.25rem; color:var(--ink);
+    display:flex; align-items:center; gap:10px; margin:26px 0 14px;
+    animation:rise .5s .22s ease backwards;
+  }
+  h2.sec::after{content:'';flex:1;height:1px;background:rgba(107,93,73,.2)}
+
+  .tool{
+    display:flex; align-items:center; gap:16px; text-decoration:none; color:inherit;
+    background:var(--card); border:1px solid rgba(107,93,73,.12); border-left:5px solid var(--teal);
+    border-radius:14px; padding:18px 20px; margin-bottom:12px; box-shadow:var(--shadow);
+    transition:transform .2s, box-shadow .2s, border-color .2s;
+    animation:rise .5s .26s ease backwards;
+  }
+  .tool:hover,.tool:focus-visible{transform:translateY(-3px);border-color:var(--teal);box-shadow:0 4px 10px rgba(44,36,24,.08), 0 20px 40px rgba(44,36,24,.14)}
+  .tool:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+  .tool .t-emoji{
+    flex-shrink:0; width:54px; height:54px; border-radius:13px; background:var(--teal-soft);
+    display:flex; align-items:center; justify-content:center; font-size:1.7rem;
+  }
+  .tool .t-body{flex:1;min-width:0}
+  .tool .t-name{font-family:'Fraunces',serif;font-weight:600;font-size:1.12rem;color:var(--teal-deep)}
+  .tool .t-desc{font-size:.8rem;color:var(--ink-soft);margin-top:3px;line-height:1.5}
+  .tool .t-arrow{flex-shrink:0;color:var(--teal);font-size:1.15rem;transition:transform .2s}
+  .tool:hover .t-arrow{transform:translateX(4px)}
+
+  .empty{
+    border:1.5px dashed rgba(107,93,73,.3); border-radius:12px; padding:14px 16px;
+    color:var(--ink-faint); font-size:.84rem; font-style:italic; text-align:center;
+    animation:rise .5s .3s ease backwards;
+  }
+  footer{margin-top:44px;color:var(--ink-faint);font-size:.78rem;text-align:center;line-height:1.8}
+  footer a{color:var(--ink-soft);text-decoration:none;border-bottom:1px dotted var(--ink-faint)}
+  footer a:hover{color:var(--ink)}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="../" class="back">← StudiaConMe</a>
+
+  <div class="hero">
+    <h1>⚖️ Decisioni Ponderate</h1>
+  </div>
+  <p class="lede">
+    Strumenti interattivi per scegliere a mente lucida: ogni decisione mette a confronto le opzioni
+    criterio per criterio, con un voto e un peso. Il verdetto è il punteggio
+    <span class="formula">Σ (voto × peso)</span> e si aggiorna in tempo reale.
+  </p>
+
+  <div class="how">
+    <b>Come si usano:</b> apri lo strumento → sposti gli slider di <b>voto</b> e <b>peso</b> →
+    il verdetto si aggiorna da solo. Il pulsante <b>💾 Salva</b> genera un link che conserva i tuoi
+    valori: aprilo da un altro dispositivo e ritrovi tutto.
+  </div>
+
+  <h2 class="sec">👨‍👩‍👧‍👧 Famiglia &amp; Figlie</h2>
+  <a class="tool" href="emma-sport.html">
+    <span class="t-emoji">🏐</span>
+    <span class="t-body">
+      <span class="t-name">Emma — Scelta dello Sport</span>
+      <span class="t-desc">Pallavolo U12 vs Atletica leggera: carattere, socialità, gare, salute e motivazione — voti e pesi tutti modificabili.</span>
+    </span>
+    <span class="t-arrow">→</span>
+  </a>
+
+  <h2 class="sec">🏠 Casa &amp; Acquisti</h2>
+  <div class="empty">Nessuno strumento ancora — es. “comprare casa al mare”.</div>
+
+  <h2 class="sec">💼 Lavoro &amp; Altro</h2>
+  <div class="empty">Nessuno strumento ancora.</div>
+
+  <footer>
+    © Giorgio Bernoni · <a href="https://github.com/bernonigiorgio-max/studia-con-me">github.com/bernonigiorgio-max/studia-con-me</a>
+  </footer>
+</div>
+</body>
+</html>
