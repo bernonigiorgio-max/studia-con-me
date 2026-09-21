@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#5b21b6">
+<meta name="description" content="Pianificatore dei compiti di Ilaria: raccogli, sposta nel giorno giusto, spunta.">
+<title>Compiti di Ilaria</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --paper:#faf7f0; --card:#fffdf8; --card2:#f5f1e8;
+    --ink:#2c2418; --ink-soft:#6b5d49; --ink-faint:#a89a85;
+    --line:#e6ded0; --line2:#d3c8b6;
+    --accent:#7c3aed; --accent-deep:#5b21b6; --accent-soft:#f1eafe;
+    --late:#dc2626; --late-soft:#fdeaea;
+    --done:#15803d;
+    --shadow:0 1px 2px rgba(44,36,24,.05), 0 8px 22px rgba(44,36,24,.08);
+    --shadow-lg:0 10px 40px rgba(44,36,24,.20);
+    --r:16px; --r-sm:11px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#17140f; --card:#221e18; --card2:#2b261e;
+      --ink:#f4f0e8; --ink-soft:#b3aa9c; --ink-faint:#7e7568;
+      --line:#352f26; --line2:#453e33;
+      --accent:#a78bfa; --accent-deep:#c4b5fd; --accent-soft:#2d2145;
+      --late:#f87171; --late-soft:#3a1d1d;
+      --done:#4ade80;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 22px rgba(0,0,0,.35);
+      --shadow-lg:0 10px 40px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#17140f; --card:#221e18; --card2:#2b261e;
+    --ink:#f4f0e8; --ink-soft:#b3aa9c; --ink-faint:#7e7568;
+    --line:#352f26; --line2:#453e33;
+    --accent:#a78bfa; --accent-deep:#c4b5fd; --accent-soft:#2d2145;
+    --late:#f87171; --late-soft:#3a1d1d;
+    --done:#4ade80;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 22px rgba(0,0,0,.35);
+    --shadow-lg:0 10px 40px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    background:var(--paper); color:var(--ink);
+    min-height:100dvh; -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(96px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+  }
+
+  /* ── Header ───────────────────────────────────────── */
+  header{
+    background:linear-gradient(150deg,var(--accent) 0%,var(--accent-deep) 100%);
+    color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 0;
+    position:sticky; top:0; z-index:60;
+    box-shadow:0 4px 18px rgba(44,36,24,.18);
+  }
+  .htop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .htop h1{font-size:1.12rem;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+  .icon-btn{
+    width:38px;height:38px;border-radius:11px;border:none;cursor:pointer;
+    background:rgba(255,255,255,.16);color:#fff;font-size:1.05rem;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .icon-btn:active{transform:scale(.92)}
+  .tabs{display:flex;gap:4px;margin-top:12px}
+  .tab{
+    flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:700;
+    font-size:.88rem;padding:10px 8px;background:transparent;color:rgba(255,255,255,.72);
+    border-bottom:3px solid transparent;transition:color .15s,border-color .15s;
+  }
+  .tab.on{color:#fff;border-bottom-color:#fff}
+
+  .sync{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 16px;font-size:.73rem;font-weight:600;
+    background:var(--card2);color:var(--ink-soft);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:#3ec46d;flex-shrink:0;box-shadow:0 0 0 3px rgba(62,196,109,.18)}
+  .dot.wait{background:#f0a32a;box-shadow:0 0 0 3px rgba(240,163,42,.2);animation:pulse 1s infinite}
+  .dot.err{background:#e0503c;box-shadow:0 0 0 3px rgba(224,80,60,.2)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+  /* ── Sezioni ──────────────────────────────────────── */
+  .sec{margin-top:20px}
+  .sec-head{display:flex;align-items:center;gap:9px;padding:0 2px 9px}
+  .sec-head h2{font-size:.82rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+  .pill{
+    font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:20px;
+    background:var(--accent-soft);color:var(--accent-deep);
+  }
+  .pill.red{background:var(--late-soft);color:var(--late)}
+  .sec-head .spacer{flex:1}
+  .mini{
+    border:1px solid var(--line2);background:var(--card);color:var(--ink-soft);
+    font-family:inherit;font-size:.74rem;font-weight:700;padding:5px 10px;
+    border-radius:20px;cursor:pointer;
+  }
+  .mini:active{transform:scale(.95)}
+
+  /* ── Card compito ─────────────────────────────────── */
+  .task{
+    display:flex;align-items:flex-start;gap:11px;
+    background:var(--card);border:1px solid var(--line);
+    border-left:4px solid var(--mat,#94a3b8);
+    border-radius:var(--r-sm);padding:11px 12px;margin-bottom:8px;
+    box-shadow:var(--shadow);cursor:pointer;
+    transition:transform .1s,opacity .2s;
+  }
+  .task:active{transform:scale(.985)}
+  .task.late{border-color:var(--late);background:var(--late-soft)}
+  .task.done{opacity:.5}
+  .task.done .txt{text-decoration:line-through}
+  .task.drag{opacity:.35}
+  .check{
+    width:24px;height:24px;border-radius:7px;flex-shrink:0;margin-top:1px;
+    border:2px solid var(--line2);background:transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.8rem;color:#fff;line-height:1;transition:background .15s,border-color .15s;
+  }
+  .check.on{background:var(--done);border-color:var(--done)}
+  .body{flex:1;min-width:0}
+  .mat{
+    display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--mat,#64748b);margin-bottom:2px;
+  }
+  .txt{font-size:.93rem;line-height:1.45;word-wrap:break-word}
+  .meta{font-size:.7rem;color:var(--ink-faint);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .badge-late{background:var(--late);color:#fff;font-weight:800;padding:1px 7px;border-radius:20px;font-size:.65rem}
+  .badge-src{background:var(--card2);color:var(--ink-faint);font-weight:700;padding:1px 7px;border-radius:20px;font-size:.65rem}
+
+  /* ── Navigatore settimana ─────────────────────────── */
+  .weeknav{
+    display:flex;align-items:center;gap:8px;margin-top:22px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:7px 8px;box-shadow:var(--shadow);
+  }
+  .weeknav button{
+    border:none;background:var(--card2);color:var(--ink);cursor:pointer;
+    width:36px;height:36px;border-radius:10px;font-size:1rem;font-weight:800;flex-shrink:0;
+  }
+  .weeknav button:active{transform:scale(.92)}
+  .weeknav .label{flex:1;text-align:center;font-size:.86rem;font-weight:700}
+  .weeknav .label small{display:block;font-size:.68rem;color:var(--ink-faint);font-weight:600;margin-top:1px}
+  .weeknav .today{width:auto;padding:0 12px;background:var(--accent-soft);color:var(--accent-deep);font-size:.76rem}
+
+  /* ── Giorni ───────────────────────────────────────── */
+  .day{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    margin-top:10px;overflow:hidden;box-shadow:var(--shadow);
+    transition:border-color .15s,background .15s;
+  }
+  .day.over{border-color:var(--accent);background:var(--accent-soft)}
+  .day.oggi{border-color:var(--accent);border-width:2px}
+  .day-head{
+    display:flex;align-items:center;gap:9px;padding:10px 13px;
+    background:var(--card2);border-bottom:1px solid var(--line);
+  }
+  .day-head .dname{font-size:.84rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .day-head .dnum{font-size:.74rem;color:var(--ink-faint);font-weight:600}
+  .day-head .dcount{margin-left:auto;font-size:.7rem;font-weight:800;color:var(--ink-faint)}
+  .day.oggi .dname{color:var(--accent-deep)}
+  .day-body{padding:10px 11px}
+  .day-body .task{margin-bottom:7px}
+  .day-body .task:last-child{margin-bottom:0}
+  .day-empty{
+    font-size:.78rem;color:var(--ink-faint);text-align:center;
+    padding:12px 8px;border:1.5px dashed var(--line2);border-radius:10px;
+  }
+
+  .empty{
+    text-align:center;padding:26px 18px;color:var(--ink-faint);
+    font-size:.86rem;line-height:1.6;
+    border:1.5px dashed var(--line2);border-radius:var(--r);background:var(--card);
+  }
+  .empty .big{font-size:2.2rem;display:block;margin-bottom:8px}
+
+  /* ── FAB ──────────────────────────────────────────── */
+  .fab{
+    position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom));
+    width:58px;height:58px;border-radius:19px;border:none;cursor:pointer;z-index:70;
+    background:linear-gradient(150deg,var(--accent),var(--accent-deep));color:#fff;
+    font-size:1.9rem;line-height:1;box-shadow:var(--shadow-lg);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .fab:active{transform:scale(.9)}
+
+  /* ── Bottom sheet ─────────────────────────────────── */
+  .scrim{
+    position:fixed;inset:0;background:rgba(20,16,10,.5);z-index:80;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+    backdrop-filter:blur(2px);
+  }
+  .scrim.on{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:90;
+    background:var(--paper);border-radius:22px 22px 0 0;
+    box-shadow:var(--shadow-lg);
+    transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+    max-height:92dvh;overflow-y:auto;
+    padding:0 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet.on{transform:translateY(0)}
+  .grab{width:42px;height:4px;border-radius:4px;background:var(--line2);margin:9px auto 4px}
+  .sheet h3{font-size:1rem;font-weight:800;padding:6px 2px 14px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:.73rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .field input[type=text], .field textarea, .field input[type=date], .field select{
+    width:100%;font-family:inherit;font-size:.95rem;padding:12px 13px;
+    border:1.5px solid var(--line2);border-radius:var(--r-sm);
+    background:var(--card);color:var(--ink);outline:none;resize:vertical;
+  }
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{
+    font-family:inherit;font-size:.8rem;font-weight:700;padding:9px 12px;
+    border-radius:11px;border:1.5px solid var(--line2);background:var(--card);
+    color:var(--ink-soft);cursor:pointer;position:relative;
+  }
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip.sugg::after{content:'✦';position:absolute;top:-5px;right:-3px;font-size:.7rem;color:var(--accent)}
+  .chip:active{transform:scale(.95)}
+  .chip small{display:block;font-size:.64rem;opacity:.7;font-weight:600}
+  .sheet-actions{display:flex;gap:9px;margin-top:6px}
+  .btn{
+    flex:1;font-family:inherit;font-size:.92rem;font-weight:800;padding:14px;
+    border:none;border-radius:var(--r-sm);cursor:pointer;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-ghost{background:var(--card);color:var(--ink-soft);border:1.5px solid var(--line2);flex:0 0 auto;padding:14px 16px}
+  .btn-danger{background:transparent;color:var(--late);border:1.5px solid var(--late);flex:0 0 auto;padding:14px 16px}
+
+  /* ── Setup / impostazioni ─────────────────────────── */
+  .setup{max-width:520px;margin:0 auto;padding:30px 20px}
+  .setup h2{font-size:1.2rem;font-weight:800;margin-bottom:8px}
+  .setup p{font-size:.88rem;line-height:1.65;color:var(--ink-soft);margin-bottom:16px}
+  .setup ol{margin:0 0 18px 18px;font-size:.86rem;line-height:1.8;color:var(--ink-soft)}
+  .code{
+    background:var(--card2);border:1px solid var(--line);border-radius:9px;
+    padding:9px 11px;font-family:ui-monospace,monospace;font-size:.76rem;
+    word-break:break-all;color:var(--ink-soft);margin-bottom:14px;
+  }
+  .rule-row{display:flex;gap:7px;align-items:center;margin-bottom:7px}
+  .rule-row input{flex:1}
+  .rule-row select{flex:0 0 118px}
+  .rule-row button{
+    flex:0 0 auto;width:38px;height:42px;border-radius:10px;border:1.5px solid var(--line2);
+    background:var(--card);color:var(--late);cursor:pointer;font-size:1rem;
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));
+    transform:translate(-50%,16px);z-index:120;
+    background:var(--ink);color:var(--paper);font-size:.84rem;font-weight:600;
+    padding:11px 18px;border-radius:24px;box-shadow:var(--shadow-lg);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:88vw;text-align:center;
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="htop">
+    <h1>📚 Compiti di Ilaria</h1>
+    <div style="display:flex;gap:6px">
+      <button class="icon-btn" id="btnTheme" title="Tema" aria-label="Cambia tema"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 2a8 8 0 0 1 0 16Z" fill="currentColor"/></svg></button>
+      <button class="icon-btn" id="btnSet" title="Impostazioni">⚙</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-tab="pianifica">Pianifica</button>
+    <button class="tab" data-tab="oggi">Oggi</button>
+  </div>
+</header>
+
+<div class="sync"><span class="dot" id="dot"></span><span id="syncTxt">Pronto</span></div>
+
+<!-- ── SETUP ─────────────────────────────────────────── -->
+<div class="setup hidden" id="setup">
+  <h2>Prima configurazione</h2>
+  <p>L'app salva i compiti in un Google Foglio tramite un Apps Script. Serve una volta sola: dopo, il link configurato lo passi a chi vuole.</p>
+  <ol>
+    <li>Crea un Google Foglio nuovo</li>
+    <li>Estensioni → Apps Script, incolla <code>apps-script.gs</code></li>
+    <li>Cambia la riga <code>var TOKEN = ...</code> con una parola tua</li>
+    <li>Distribuisci → Nuova distribuzione → App web<br>Esegui come: <b>Me</b> · Accesso: <b>Chiunque</b></li>
+    <li>Incolla qui sotto l'URL che finisce con <code>/exec</code></li>
+  </ol>
+  <div class="field">
+    <label>URL Apps Script</label>
+    <input type="text" id="inUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  </div>
+  <div class="field">
+    <label>Token</label>
+    <input type="text" id="inTok" placeholder="la parola scelta al punto 3">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-primary" id="btnSaveCfg">Collega</button>
+  </div>
+</div>
+
+<!-- ── IMPOSTAZIONI ──────────────────────────────────── -->
+<div class="setup hidden" id="opts">
+  <h2>Impostazioni</h2>
+  <p>Regole automatiche: quando un compito di quella materia arriva, l'app propone il giorno indicato (chip con ✦).</p>
+  <div id="rules"></div>
+  <button class="mini" id="btnAddRule" style="margin:4px 0 20px">+ Aggiungi regola</button>
+
+  <h2 style="font-size:1rem">Condividi l'app</h2>
+  <p>Questo link configura l'app da solo: chi lo apre non deve impostare niente né avere un account Google.</p>
+  <div class="code" id="shareLink">—</div>
+  <div class="sheet-actions" style="margin-bottom:22px">
+    <button class="btn btn-primary" id="btnCopy">Copia link</button>
+  </div>
+
+  <h2 style="font-size:1rem">Dati</h2>
+  <div class="sheet-actions" style="margin-bottom:10px">
+    <button class="btn btn-ghost" style="flex:1" id="btnExport">Esporta JSON</button>
+    <button class="btn btn-ghost" style="flex:1" id="btnArchive">Archivia fatti</button>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" style="flex:1" id="btnReset">Scollega questo dispositivo</button>
+  </div>
+</div>
+
+<!-- ── APP ───────────────────────────────────────────── -->
+<main class="wrap hidden" id="app">
+
+  <section id="viewPianifica">
+    <div class="sec hidden" id="secLate">
+      <div class="sec-head">
+        <h2>In ritardo</h2><span class="pill red" id="cntLate">0</span>
+      </div>
+      <div id="listLate"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head">
+        <h2>In arrivo</h2><span class="pill" id="cntIn">0</span>
+        <span class="spacer"></span>
+        <button class="mini hidden" id="btnRules">✦ Applica regole</button>
+      </div>
+      <div id="listIn"></div>
+    </div>
+
+    <div class="weeknav">
+      <button id="wPrev">‹</button>
+      <div class="label" id="wLabel">—<small id="wSub"></small></div>
+      <button class="today" id="wToday">Oggi</button>
+      <button id="wNext">›</button>
+    </div>
+    <div id="days"></div>
+  </section>
+
+  <section id="viewOggi" class="hidden">
+    <div class="sec" id="secOggi"></div>
+  </section>
+
+</main>
+
+<button class="fab hidden" id="fab">+</button>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3 id="shTitle">Compito</h3>
+  <div class="field">
+    <label>Materia</label>
+    <input type="text" id="shMat" list="materie" placeholder="es. Geografia" autocomplete="off">
+    <datalist id="materie"></datalist>
+  </div>
+  <div class="field">
+    <label>Cosa deve fare</label>
+    <textarea id="shTxt" rows="3" placeholder="es. Ripassare le regioni del Nord, pag. 84"></textarea>
+  </div>
+  <div class="field">
+    <label>Quando lo fa</label>
+    <div class="chips" id="shDays"></div>
+  </div>
+  <div class="field">
+    <label>Altra data</label>
+    <input type="date" id="shDate">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-danger hidden" id="shDel">🗑</button>
+    <button class="btn btn-ghost" id="shCancel">Annulla</button>
+    <button class="btn btn-primary" id="shOk">Salva</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ══ Configurazione ══════════════════════════════════════════════════
+   Quando l'URL dell'Apps Script e' noto lo si puo' scrivere qui, cosi'
+   chi apre la pagina non deve configurare nulla. Finche' e' vuoto,
+   l'app chiede i dati al primo avvio (o li prende dal link #s=..&t=..). */
+const SCRIPT_URL_DEFAULT = '';
+const TOKEN_DEFAULT      = '';
+
+const LS = 'compiti-ilaria-v1';
+
+/* ══ Materie ═════════════════════════════════════════════════════════ */
+const MATERIE = {
+  matematica:'#2563eb', italiano:'#d97706', geografia:'#15803d',
+  storia:'#a16207',     scienze:'#b91c1c',  inglese:'#4338ca',
+  arte:'#db2777',       musica:'#7c3aed',   tecnologia:'#0891b2',
+  motoria:'#ea580c',    religione:'#64748b', informatica:'#0d9488'
+};
+const GIORNI = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+const GIORNI_C = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio',
+              'agosto','settembre','ottobre','novembre','dicembre'];
+
+function colore(m){
+  const k = String(m||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  for (const nome in MATERIE) if (k && (nome.startsWith(k.slice(0,4)) || k.startsWith(nome.slice(0,4)))) return MATERIE[nome];
+  return '#94a3b8';
+}
+
+/* ══ Date ════════════════════════════════════════════════════════════ */
+const iso  = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const oggi = () => iso(new Date());
+function lunediDi(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const g = (x.getDay()+6)%7;             // 0 = lunedì
+  x.setDate(x.getDate()-g);
+  return x;
+}
+function piuGiorni(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function etichetta(s){
+  if(!s) return '';
+  const [a,m,g] = s.split('-').map(Number);
+  const d = new Date(a,m-1,g);
+  return GIORNI[(d.getDay()+6)%7]+' '+g+' '+MESI[m-1];
+}
+
+/* ══ Stato ═══════════════════════════════════════════════════════════ */
+let cfg     = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT };
+let compiti = [];
+let regole  = {};                 // { geografia:0 }  0=lunedì … 6=domenica
+let dirty   = new Set();
+let offset  = 0;                  // settimane rispetto a quella corrente
+let tab     = 'pianifica';
+let editId  = null;
+let saveT   = null;
+
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ══ Toast / stato sync ══════════════════════════════════════════════ */
+let toastT = null;
+function toast(t){
+  const el = $('#toast'); el.textContent = t; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+function sync(stato, testo){
+  $('#dot').className = 'dot' + (stato==='wait'?' wait':stato==='err'?' err':'');
+  $('#syncTxt').textContent = testo;
+}
+
+/* ══ Persistenza locale (cache offline) ══════════════════════════════ */
+function cache(){
+  try{ localStorage.setItem(LS, JSON.stringify({cfg, compiti, regole, dirty:[...dirty]})); }catch(e){}
+}
+function scache(){
+  try{
+    const v = JSON.parse(localStorage.getItem(LS)||'null');
+    if(!v) return false;
+    if(v.cfg && v.cfg.url) cfg = v.cfg;
+    compiti = v.compiti || [];
+    regole  = v.regole  || {};
+    dirty   = new Set(v.dirty || []);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ══ Rete ════════════════════════════════════════════════════════════ */
+async function carica(){
+  if(!cfg.url) return;
+  sync('wait','Carico…');
+  try{
+    const r = await fetch(cfg.url+'?t='+encodeURIComponent(cfg.tok));
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||'errore');
+    // I compiti modificati qui e non ancora salvati hanno la precedenza.
+    const miei = compiti.filter(c=>dirty.has(c.id));
+    const map = {}; j.compiti.forEach(c=>map[c.id]=c); miei.forEach(c=>map[c.id]=c);
+    compiti = Object.values(map);
+    regole  = j.regole || {};
+    sync('ok', dirty.size ? 'Modifiche da salvare' : 'Sincronizzato');
+    cache(); render();
+    if(dirty.size) salva();
+  }catch(e){
+    sync('err','Offline — dati locali');
+  }
+}
+
+function salva(){
+  if(!cfg.url){ cache(); return; }
+  sync('wait','Salvo…');
+  clearTimeout(saveT);
+  saveT = setTimeout(async ()=>{
+    const invio = compiti.filter(c=>dirty.has(c.id));
+    const snapshot = new Set(dirty);
+    try{
+      const r = await fetch(cfg.url, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},   // evita il preflight CORS
+        body: JSON.stringify({ t:cfg.tok, compiti:invio, regole })
+      });
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error||'errore');
+      snapshot.forEach(id=>dirty.delete(id));
+      const locali = compiti.filter(c=>dirty.has(c.id));
+      const map = {}; j.compiti.forEach(c=>map[c.id]=c); locali.forEach(c=>map[c.id]=c);
+      compiti = Object.values(map);
+      regole = j.regole || regole;
+      sync('ok','Salvato');
+      cache(); render();
+    }catch(e){
+      sync('err','Non salvato — riprovo');
+      cache();
+    }
+  }, 700);
+}
+
+/* ══ Operazioni sui compiti ══════════════════════════════════════════ */
+function tocca(c){ c.updatedAt = new Date().toISOString(); dirty.add(c.id); }
+
+function nuovo(dati){
+  const ora = new Date().toISOString();
+  const c = Object.assign({
+    id:uid(), createdAt:ora, updatedAt:ora, materia:'', testo:'',
+    dataOriginale:'', giorno:'', fatto:false, fonte:'manuale', note:'', deleted:false
+  }, dati);
+  compiti.push(c); dirty.add(c.id);
+  return c;
+}
+
+const attivi   = () => compiti.filter(c=>!c.deleted);
+const inArrivo = () => attivi().filter(c=>!c.giorno && !c.fatto);
+const inRitardo= () => attivi().filter(c=>c.giorno && c.giorno < oggi() && !c.fatto)
+                               .sort((a,b)=>a.giorno<b.giorno?-1:1);
+const delGiorno= g  => attivi().filter(c=>c.giorno===g)
+                               .sort((a,b)=>(a.fatto?1:0)-(b.fatto?1:0));
+
+function suggerito(materia){
+  const k = String(materia||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  for(const m in regole) if(k && (k.startsWith(m.slice(0,4)) || m.startsWith(k.slice(0,4)))) return regole[m];
+  return null;
+}
+
+/* ══ Rendering ═══════════════════════════════════════════════════════ */
+function cardCompito(c){
+  const el = document.createElement('div');
+  const tardi = c.giorno && c.giorno < oggi() && !c.fatto;
+  el.className = 'task'+(tardi?' late':'')+(c.fatto?' done':'');
+  el.style.setProperty('--mat', colore(c.materia));
+  el.dataset.id = c.id;
+  el.draggable = true;
+
+  const chk = document.createElement('button');
+  chk.className = 'check'+(c.fatto?' on':'');
+  chk.textContent = c.fatto ? '✓' : '';
+  chk.setAttribute('aria-label', c.fatto?'Segna da fare':'Segna fatto');
+  chk.onclick = ev => { ev.stopPropagation(); c.fatto = !c.fatto; tocca(c); cache(); render(); salva(); };
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  if(c.materia){
+    const m = document.createElement('span');
+    m.className='mat'; m.style.setProperty('--mat',colore(c.materia)); m.textContent=c.materia;
+    body.appendChild(m);
+  }
+  const t = document.createElement('div');
+  t.className='txt'; t.textContent = c.testo || '(senza descrizione)';
+  body.appendChild(t);
+
+  const meta = document.createElement('div');
+  meta.className='meta';
+  if(tardi){
+    const b=document.createElement('span'); b.className='badge-late';
+    b.textContent='in ritardo · '+etichetta(c.giorno); meta.appendChild(b);
+  }
+  if(c.dataOriginale && c.dataOriginale!==c.giorno){
+    const b=document.createElement('span'); b.className='badge-src';
+    b.textContent='assegnato per '+etichetta(c.dataOriginale); meta.appendChild(b);
+  }
+  if(c.fonte==='nuvola'){
+    const b=document.createElement('span'); b.className='badge-src'; b.textContent='Nuvola'; meta.appendChild(b);
+  }
+  if(meta.children.length) body.appendChild(meta);
+
+  el.appendChild(chk); el.appendChild(body);
+  el.onclick = ()=>apriSheet(c.id);
+
+  el.addEventListener('dragstart', ev=>{
+    ev.dataTransfer.setData('text/plain', c.id);
+    ev.dataTransfer.effectAllowed='move';
+    el.classList.add('drag');
+  });
+  el.addEventListener('dragend', ()=>el.classList.remove('drag'));
+  return el;
+}
+
+function render(){
+  if(!cfg.url){ $('#setup').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#fab').classList.add('hidden'); return; }
+  if($('#opts').classList.contains('hidden')){
+    $('#setup').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    $('#fab').classList.remove('hidden');
+  }
+
+  $('#viewPianifica').classList.toggle('hidden', tab!=='pianifica');
+  $('#viewOggi').classList.toggle('hidden', tab!=='oggi');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+
+  const lista = new Set(attivi().map(c=>c.materia).filter(Boolean));
+  $('#materie').innerHTML = [...lista].map(m=>'<option value="'+m.replace(/"/g,'&quot;')+'">').join('');
+
+  tab==='oggi' ? renderOggi() : renderPianifica();
+}
+
+function renderPianifica(){
+  const lunSett = piuGiorni(lunediDi(new Date()), offset*7);
+  const daG = iso(lunSett), aG = iso(piuGiorni(lunSett,6));
+
+  // In ritardo: solo quelli fuori dalla settimana mostrata, altrimenti li
+  // vedresti due volte (qui e nel loro giorno) a poche righe di distanza.
+  const tardi = inRitardo().filter(c => c.giorno < daG || c.giorno > aG);
+  $('#secLate').classList.toggle('hidden', tardi.length===0);
+  $('#cntLate').textContent = tardi.length;
+  const lLate = $('#listLate'); lLate.innerHTML='';
+  tardi.forEach(c=>lLate.appendChild(cardCompito(c)));
+
+  // In arrivo
+  const arr = inArrivo();
+  $('#cntIn').textContent = arr.length;
+  const lIn = $('#listIn'); lIn.innerHTML='';
+  if(!arr.length){
+    lIn.innerHTML = '<div class="empty"><span class="big">✅</span>Nessun compito da pianificare.<br>Usa il <b>+</b> per aggiungerne uno dal diario.</div>';
+  } else {
+    arr.forEach(c=>lIn.appendChild(cardCompito(c)));
+  }
+  const conRegola = arr.some(c=>suggerito(c.materia)!==null);
+  $('#btnRules').classList.toggle('hidden', !conRegola);
+
+  // Settimana
+  const lun = lunSett;
+  const dom = piuGiorni(lun,6);
+  $('#wLabel').firstChild.textContent =
+    offset===0 ? 'Questa settimana' : offset===1 ? 'Prossima settimana' : offset===-1 ? 'Settimana scorsa' : 'Settimana';
+  $('#wSub').textContent = lun.getDate()+' '+MESI[lun.getMonth()].slice(0,3)+' – '+dom.getDate()+' '+MESI[dom.getMonth()].slice(0,3);
+
+  const box = $('#days'); box.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d = piuGiorni(lun,i), g = iso(d);
+    const items = delGiorno(g);
+    const card = document.createElement('div');
+    card.className = 'day'+(g===oggi()?' oggi':'');
+    card.dataset.giorno = g;
+
+    const head = document.createElement('div');
+    head.className='day-head';
+    head.innerHTML = '<span class="dname">'+GIORNI[i]+'</span>'+
+                     '<span class="dnum">'+d.getDate()+' '+MESI[d.getMonth()].slice(0,3)+'</span>'+
+                     '<span class="dcount">'+(items.length?items.filter(c=>!c.fatto).length+'/'+items.length:'')+'</span>';
+    const body = document.createElement('div');
+    body.className='day-body';
+    if(!items.length){
+      const e=document.createElement('div'); e.className='day-empty'; e.textContent='—'; body.appendChild(e);
+    } else {
+      items.forEach(c=>body.appendChild(cardCompito(c)));
+    }
+    card.appendChild(head); card.appendChild(body);
+
+    card.addEventListener('dragover', ev=>{ ev.preventDefault(); card.classList.add('over'); });
+    card.addEventListener('dragleave', ()=>card.classList.remove('over'));
+    card.addEventListener('drop', ev=>{
+      ev.preventDefault(); card.classList.remove('over');
+      const id = ev.dataTransfer.getData('text/plain');
+      const c = compiti.find(x=>x.id===id);
+      if(c){ c.giorno = g; tocca(c); cache(); render(); salva(); }
+    });
+    box.appendChild(card);
+  }
+}
+
+function renderOggi(){
+  const g = oggi();
+  const items = delGiorno(g);
+  const tardi = inRitardo();
+  const box = $('#secOggi'); box.innerHTML='';
+
+  const h = document.createElement('div');
+  h.className='sec-head';
+  h.innerHTML = '<h2>'+etichetta(g)+'</h2><span class="pill">'+items.filter(c=>!c.fatto).length+' da fare</span>';
+  box.appendChild(h);
+
+  if(!items.length){
+    const e=document.createElement('div'); e.className='empty';
+    e.innerHTML='<span class="big">🎉</span>Oggi niente in programma!';
+    box.appendChild(e);
+  } else {
+    items.forEach(c=>box.appendChild(cardCompito(c)));
+  }
+
+  if(tardi.length){
+    const h2=document.createElement('div');
+    h2.className='sec-head'; h2.style.paddingTop='22px';
+    h2.innerHTML='<h2>Rimasti indietro</h2><span class="pill red">'+tardi.length+'</span>';
+    box.appendChild(h2);
+    tardi.forEach(c=>box.appendChild(cardCompito(c)));
+  }
+}
+
+/* ══ Bottom sheet ════════════════════════════════════════════════════ */
+function apriSheet(id){
+  editId = id;
+  const c = id ? compiti.find(x=>x.id===id) : null;
+  $('#shTitle').textContent = c ? 'Modifica compito' : 'Nuovo compito';
+  $('#shMat').value  = c ? c.materia : '';
+  $('#shTxt').value  = c ? c.testo   : '';
+  $('#shDate').value = c && c.giorno ? c.giorno : '';
+  $('#shDel').classList.toggle('hidden', !c);
+  renderChips(c ? c.giorno : '');
+  $('#scrim').classList.add('on');
+  $('#sheet').classList.add('on');
+  if(!c) setTimeout(()=>$('#shMat').focus(), 260);
+}
+function chiudiSheet(){
+  $('#scrim').classList.remove('on');
+  $('#sheet').classList.remove('on');
+  editId = null;
+}
+function renderChips(sel){
+  const base = sel && sel>='1900-01-01' ? new Date(sel+'T12:00:00') : piuGiorni(lunediDi(new Date()), offset*7+3);
+  const lun = lunediDi(base);
+  const sug = suggerito($('#shMat').value);
+  const box = $('#shDays'); box.innerHTML='';
+
+  const none = document.createElement('button');
+  none.className='chip'+(sel?'':' on'); none.type='button';
+  none.innerHTML='In arrivo<small>non pianificato</small>';
+  none.onclick = ()=>{ $('#shDate').value=''; renderChips(''); };
+  box.appendChild(none);
+
+  for(let i=0;i<7;i++){
+    const d = piuGiorni(lun,i), g = iso(d);
+    const b = document.createElement('button');
+    b.type='button';
+    b.className='chip'+(g===sel?' on':'')+(sug===i && !sel ? ' sugg':'');
+    b.innerHTML = GIORNI_C[i]+'<small>'+d.getDate()+' '+MESI[d.getMonth()].slice(0,3)+'</small>';
+    b.onclick = ()=>{ $('#shDate').value=g; renderChips(g); };
+    box.appendChild(b);
+  }
+}
+
+function salvaSheet(){
+  const materia = $('#shMat').value.trim();
+  const testo   = $('#shTxt').value.trim();
+  const giorno  = $('#shDate').value || '';
+  if(!materia && !testo){ toast('Scrivi almeno la materia'); return; }
+
+  if(editId){
+    const c = compiti.find(x=>x.id===editId);
+    c.materia = materia; c.testo = testo; c.giorno = giorno;
+    tocca(c);
+  } else {
+    nuovo({ materia, testo, giorno, dataOriginale: giorno, fonte:'manuale' });
+  }
+  chiudiSheet(); cache(); render(); salva();
+}
+
+/* ══ Impostazioni ════════════════════════════════════════════════════ */
+function renderRegole(){
+  const box = $('#rules'); box.innerHTML='';
+  Object.keys(regole).forEach(m=>{
+    const row = document.createElement('div'); row.className='rule-row';
+    const inp = document.createElement('input');
+    inp.type='text'; inp.value=m; inp.placeholder='materia';
+    const sel = document.createElement('select');
+    GIORNI.forEach((g,i)=>{
+      const o=document.createElement('option'); o.value=i; o.textContent=g;
+      if(regole[m]===i) o.selected=true; sel.appendChild(o);
+    });
+    const del = document.createElement('button'); del.textContent='×';
+    inp.onchange = ()=>{ const v=inp.value.trim().toLowerCase(); if(!v) return;
+                         const d=regole[m]; delete regole[m]; regole[v]=d; renderRegole(); salva(); };
+    sel.onchange = ()=>{ regole[m]=Number(sel.value); salva(); render(); };
+    del.onclick  = ()=>{ delete regole[m]; renderRegole(); salva(); render(); };
+    row.appendChild(inp); row.appendChild(sel); row.appendChild(del);
+    box.appendChild(row);
+  });
+  if(!Object.keys(regole).length){
+    box.innerHTML = '<div class="empty" style="padding:16px">Nessuna regola. Esempio utile: <b>geografia → lunedì</b>, il giorno del potenziamento.</div>';
+  }
+}
+
+function linkCondivisione(){
+  const base = location.origin + location.pathname;
+  return base + '#s=' + encodeURIComponent(cfg.url) + '&t=' + encodeURIComponent(cfg.tok);
+}
+
+function apriOpzioni(){
+  const on = $('#opts').classList.contains('hidden');
+  $('#opts').classList.toggle('hidden', !on);
+  $('#app').classList.toggle('hidden', on);
+  $('#fab').classList.toggle('hidden', on);
+  if(on){ renderRegole(); $('#shareLink').textContent = linkCondivisione(); }
+  else render();
+}
+
+/* ══ Avvio ═══════════════════════════════════════════════════════════ */
+function leggiHash(){
+  if(!location.hash) return false;
+  const p = new URLSearchParams(location.hash.slice(1));
+  const s = p.get('s'), t = p.get('t');
+  if(s && t){
+    cfg = { url:s, tok:t };
+    cache();
+    history.replaceState(null,'',location.pathname);   // via il token dalla barra
+    return true;
+  }
+  return false;
+}
+
+function init(){
+  const tema = localStorage.getItem(LS+'-tema');
+  if(tema) document.documentElement.dataset.theme = tema;
+
+  scache();
+  leggiHash();
+  if(!cfg.url && SCRIPT_URL_DEFAULT) cfg = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT };
+
+  render();
+  if(cfg.url) carica();
+
+  // Tab
+  document.querySelectorAll('.tab').forEach(b=>{
+    b.onclick = ()=>{ tab = b.dataset.tab; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+  });
+
+  // Settimana
+  $('#wPrev').onclick  = ()=>{ offset--; renderPianifica(); };
+  $('#wNext').onclick  = ()=>{ offset++; renderPianifica(); };
+  $('#wToday').onclick = ()=>{ offset=0; renderPianifica(); };
+
+  // Sheet
+  $('#fab').onclick      = ()=>apriSheet(null);
+  $('#shCancel').onclick = chiudiSheet;
+  $('#scrim').onclick    = chiudiSheet;
+  $('#shOk').onclick     = salvaSheet;
+  $('#shMat').oninput    = ()=>{ if(!$('#shDate').value) renderChips(''); };
+  $('#shDate').onchange  = ()=>renderChips($('#shDate').value);
+  $('#shDel').onclick    = ()=>{
+    const c = compiti.find(x=>x.id===editId);
+    if(c && confirm('Eliminare questo compito?')){ c.deleted=true; tocca(c); chiudiSheet(); cache(); render(); salva(); }
+  };
+
+  // Regole
+  $('#btnRules').onclick = ()=>{
+    let n=0;
+    inArrivo().forEach(c=>{
+      const s = suggerito(c.materia);
+      if(s===null) return;
+      const lun = piuGiorni(lunediDi(new Date()), offset*7);
+      c.giorno = iso(piuGiorni(lun,s)); tocca(c); n++;
+    });
+    cache(); render(); salva();
+    toast(n ? n+' compit'+(n===1?'o spostato':'i spostati') : 'Nessuna regola applicabile');
+  };
+
+  // Impostazioni
+  $('#btnSet').onclick = apriOpzioni;
+  $('#btnAddRule').onclick = ()=>{
+    let n='materia', i=1;
+    while(regole[n]!==undefined){ n='materia'+(++i); }
+    regole[n]=0; renderRegole(); salva();
+  };
+  $('#btnCopy').onclick = async ()=>{
+    try{ await navigator.clipboard.writeText(linkCondivisione()); toast('Link copiato'); }
+    catch(e){ toast('Copialo a mano dal riquadro'); }
+  };
+  $('#btnExport').onclick = ()=>{
+    const blob = new Blob([JSON.stringify({compiti,regole},null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'compiti-ilaria-'+oggi()+'.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('#btnArchive').onclick = ()=>{
+    const vecchi = attivi().filter(c=>c.fatto && c.giorno && c.giorno < oggi());
+    if(!vecchi.length){ toast('Niente da archiviare'); return; }
+    if(!confirm('Archiviare '+vecchi.length+' compiti gia’ fatti?')) return;
+    vecchi.forEach(c=>{ c.deleted=true; tocca(c); });
+    cache(); render(); salva(); toast(vecchi.length+' archiviati');
+  };
+  $('#btnReset').onclick = ()=>{
+    if(!confirm('Scollegare questo dispositivo? I dati restano sul foglio.')) return;
+    localStorage.removeItem(LS); location.reload();
+  };
+  $('#btnSaveCfg').onclick = ()=>{
+    const u = $('#inUrl').value.trim(), t = $('#inTok').value.trim();
+    if(!u || !t){ toast('Servono URL e token'); return; }
+    cfg = { url:u, tok:t }; cache();
+    $('#setup').classList.add('hidden');
+    render(); carica();
+  };
+  $('#btnTheme').onclick = ()=>{
+    const cur = document.documentElement.dataset.theme;
+    const next = cur==='dark' ? 'light' : cur==='light' ? '' : 'dark';
+    if(next) document.documentElement.dataset.theme = next;
+    else delete document.documentElement.dataset.theme;
+    try{ localStorage.setItem(LS+'-tema', next); }catch(e){}
+  };
+
+  // Risincronizza quando torni sull'app
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) carica(); });
+  window.addEventListener('online', ()=>carica());
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}
+
+init();
+</script>
+</body>
+</html>
