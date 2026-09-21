@@ -10,37 +10,48 @@ URL: <https://bernonigiorgio-max.github.io/studia-con-me/ilaria/compiti/>
 | Pezzo | File | Cosa fa |
 |---|---|---|
 | App | `index.html` | Tutta l'interfaccia, un file solo |
-| Backend | `apps-script.gs` | Da incollare in Google Apps Script: legge e scrive il foglio |
+| Backend | `apps-script.gs` | Opzionale: da incollare in Google Apps Script per sincronizzare |
 | PWA | `manifest.webmanifest`, `sw.js`, `icon-*.png` | Installazione sulla home di Android e funzionamento offline |
 
-I dati stanno in **un Google Foglio nel Drive di chi installa lo script**.
+Senza foglio collegato i dati stanno solo nel browser del dispositivo.
+Collegandolo, stanno in **un Google Foglio nel Drive di chi installa lo script**.
 Chi usa l'app non deve avere un account Google né ricevere condivisioni: le
 richieste arrivano anonime e lo script le esegue a nome del proprietario.
 
-## Installazione (una volta sola)
+## Primo avvio
 
-1. Crea un Google Foglio nuovo, chiamalo `Compiti Ilaria`.
-2. **Estensioni → Apps Script**, cancella quello che c'è, incolla tutto
-   `apps-script.gs`.
-3. Cambia la prima riga utile:
-   ```js
-   var TOKEN = 'una-parola-a-caso-tua';
-   ```
-   Chi non conosce questa parola non può leggere né scrivere.
-4. **Distribuisci → Nuova distribuzione → App web**
-   - *Esegui come*: **Me**
-   - *Chi ha accesso*: **Chiunque**
-5. Autorizza (Google avvisa che l'app non è verificata: è la tua, prosegui).
-6. Copia l'URL che finisce con `/exec`.
-7. Apri l'app, incolla URL e token, premi **Collega**.
+Apri il link e premi **Inizia subito**. L'app funziona da quel momento, sul
+dispositivo che hai in mano, senza configurare niente: i compiti restano nel
+browser.
+
+Il Google Foglio serve solo quando vuoi vedere gli stessi compiti da più
+dispositivi. Si collega dopo, e i compiti già inseriti ci finiscono dentro da
+soli.
+
+## Collegare il Google Foglio (opzionale, per sincronizzare)
+
+**Impostazioni → Sincronizzazione** mostra i passi con il token già generato e
+un pulsante che copia il codice pronto da incollare. In sintesi:
+
+1. [sheets.new](https://sheets.new) → un Foglio Google vuoto, chiamalo `Compiti Ilaria`
+2. **Estensioni → Apps Script**, cancella il codice di esempio
+3. **Copia il codice** dall'app e incollalo lì (il token è già dentro), salva
+4. **Distribuisci → Nuova distribuzione**, ingranaggio → **App web**
+5. *Esegui come*: **Io** · *Chi ha accesso*: **Chiunque** → **Distribuisci**
+6. Autorizza: all'avviso "app non verificata" → **Avanzate → Apri progetto
+   (non sicuro) → Consenti**. Lo script è il tuo
+7. Copia l'URL che finisce con `/exec` e incollalo nell'app
 
 I due fogli `Compiti` e `Config` si creano da soli al primo salvataggio.
+Il file `apps-script.gs` in questa cartella è la stessa sorgente che il
+pulsante copia, con il segnaposto `TOKEN` al posto di quello generato.
 
 ## Darla agli altri
 
-Impostazioni → **Copia link**. Il link contiene già URL e token: chi lo apre
-si ritrova l'app configurata, senza digitare niente. Poi dal browser Android:
-*menu ⋮ → Aggiungi a schermata Home*.
+Funziona solo dopo aver collegato il foglio. Impostazioni → **Copia link**:
+il link contiene già URL e token, chi lo apre si ritrova l'app configurata
+senza digitare niente. Poi dal browser Android: *menu ⋮ → Aggiungi a
+schermata Home*.
 
 Il token viene tolto dalla barra degli indirizzi appena letto e salvato in
 locale, così non resta nella cronologia.
@@ -68,8 +79,12 @@ insieme non si sovrascrivono a vicenda. Senza rete l'app continua a funzionare
 sulla copia locale e risincronizza da sola quando torna online o quando
 riapri la scheda.
 
-Backup: il foglio stesso, con la cronologia versioni di Google. In più
-Impostazioni → **Esporta JSON**.
+Senza foglio collegato non c'è sincronizzazione: i compiti vivono nel browser
+di quel dispositivo e basta. Collegandolo più tardi, quelli già inseriti
+vengono spinti sul foglio al primo salvataggio.
+
+Backup: con il foglio, il foglio stesso e la sua cronologia versioni di
+Google. Sempre disponibile Impostazioni → **Esporta JSON**.
 
 ## Schema del foglio `Compiti`
 

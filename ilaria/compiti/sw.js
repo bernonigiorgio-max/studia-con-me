@@ -1,7 +1,7 @@
 /* Service worker minimo: guscio in cache, dati sempre dalla rete.
    La pagina usa "network first" cosi' un aggiornamento si vede subito;
    se sei offline riparte dalla copia in cache. */
-const CACHE = 'compiti-ilaria-v1';
+const CACHE = 'compiti-ilaria-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

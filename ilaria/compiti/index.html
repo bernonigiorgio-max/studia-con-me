@@ -251,6 +251,44 @@
     padding:9px 11px;font-family:ui-monospace,monospace;font-size:.76rem;
     word-break:break-all;color:var(--ink-soft);margin-bottom:14px;
   }
+  .hint{font-size:.82rem;line-height:1.6;color:var(--ink-faint)}
+  .setup details{
+    margin-top:22px;border-top:1px solid var(--line);padding-top:16px;
+  }
+  .setup summary{
+    font-size:.86rem;font-weight:700;color:var(--ink-soft);cursor:pointer;
+    list-style:none;padding:6px 0;
+  }
+  .setup summary::-webkit-details-marker{display:none}
+  .setup summary::before{content:'▸ ';color:var(--accent)}
+  .setup details[open] summary::before{content:'▾ '}
+  .steps{counter-reset:s;margin:14px 0 0;padding:0;list-style:none}
+  .steps li{
+    counter-increment:s;position:relative;padding:0 0 16px 38px;
+    font-size:.88rem;line-height:1.6;color:var(--ink-soft);
+  }
+  .steps li::before{
+    content:counter(s);position:absolute;left:0;top:-1px;
+    width:26px;height:26px;border-radius:50%;
+    background:var(--accent);color:#fff;
+    font-size:.78rem;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .steps li b{color:var(--ink)}
+  .steps a{
+    color:var(--accent-deep);font-weight:700;
+    text-decoration:none;border-bottom:1.5px solid var(--accent);
+  }
+  .steps code{
+    background:var(--card2);border:1px solid var(--line);border-radius:5px;
+    padding:1px 5px;font-family:ui-monospace,monospace;font-size:.82em;
+  }
+  .ok-box{
+    display:flex;align-items:center;gap:10px;
+    background:var(--accent-soft);border-radius:var(--r-sm);
+    padding:13px 15px;font-size:.86rem;font-weight:600;color:var(--accent-deep);
+    margin-bottom:14px;
+  }
   .rule-row{display:flex;gap:7px;align-items:center;margin-bottom:7px}
   .rule-row input{flex:1}
   .rule-row select{flex:0 0 118px}
@@ -290,26 +328,29 @@
 
 <!-- ── SETUP ─────────────────────────────────────────── -->
 <div class="setup hidden" id="setup">
-  <h2>Prima configurazione</h2>
-  <p>L'app salva i compiti in un Google Foglio tramite un Apps Script. Serve una volta sola: dopo, il link configurato lo passi a chi vuole.</p>
-  <ol>
-    <li>Crea un Google Foglio nuovo</li>
-    <li>Estensioni → Apps Script, incolla <code>apps-script.gs</code></li>
-    <li>Cambia la riga <code>var TOKEN = ...</code> con una parola tua</li>
-    <li>Distribuisci → Nuova distribuzione → App web<br>Esegui come: <b>Me</b> · Accesso: <b>Chiunque</b></li>
-    <li>Incolla qui sotto l'URL che finisce con <code>/exec</code></li>
-  </ol>
-  <div class="field">
-    <label>URL Apps Script</label>
-    <input type="text" id="inUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <h2>📚 Compiti di Ilaria</h2>
+  <p>Raccogli i compiti in un elenco, spostali nel giorno in cui vanno fatti davvero, spunta quando è finito.</p>
+  <div class="sheet-actions" style="margin-bottom:12px">
+    <button class="btn btn-primary" id="btnLocale">Inizia subito</button>
   </div>
-  <div class="field">
-    <label>Token</label>
-    <input type="text" id="inTok" placeholder="la parola scelta al punto 3">
-  </div>
-  <div class="sheet-actions">
-    <button class="btn btn-primary" id="btnSaveCfg">Collega</button>
-  </div>
+  <p class="hint">Parte così com'è, su questo dispositivo, senza configurare niente.<br>
+  Quando vorrai vedere gli stessi compiti anche dal telefono di Olga o di Ilaria, li colleghi
+  da <b>Impostazioni → Sincronizzazione</b>: quelli già inseriti si spostano da soli, non si perde nulla.</p>
+
+  <details>
+    <summary>Ho già un foglio collegato</summary>
+    <div class="field" style="margin-top:12px">
+      <label>URL Apps Script</label>
+      <input type="text" id="inUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <div class="field">
+      <label>Token</label>
+      <input type="text" id="inTok" placeholder="il token del foglio">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-primary" id="btnSaveCfg">Collega</button>
+    </div>
+  </details>
 </div>
 
 <!-- ── IMPOSTAZIONI ──────────────────────────────────── -->
@@ -319,12 +360,8 @@
   <div id="rules"></div>
   <button class="mini" id="btnAddRule" style="margin:4px 0 20px">+ Aggiungi regola</button>
 
-  <h2 style="font-size:1rem">Condividi l'app</h2>
-  <p>Questo link configura l'app da solo: chi lo apre non deve impostare niente né avere un account Google.</p>
-  <div class="code" id="shareLink">—</div>
-  <div class="sheet-actions" style="margin-bottom:22px">
-    <button class="btn btn-primary" id="btnCopy">Copia link</button>
-  </div>
+  <h2 style="font-size:1rem">Sincronizzazione</h2>
+  <div id="syncBox"></div>
 
   <h2 style="font-size:1rem">Dati</h2>
   <div class="sheet-actions" style="margin-bottom:10px">
@@ -332,7 +369,7 @@
     <button class="btn btn-ghost" style="flex:1" id="btnArchive">Archivia fatti</button>
   </div>
   <div class="sheet-actions">
-    <button class="btn btn-ghost" style="flex:1" id="btnReset">Scollega questo dispositivo</button>
+    <button class="btn btn-ghost" style="flex:1" id="btnReset">Azzera questo dispositivo</button>
   </div>
 </div>
 
@@ -451,7 +488,7 @@ function etichetta(s){
 }
 
 /* ══ Stato ═══════════════════════════════════════════════════════════ */
-let cfg     = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT };
+let cfg     = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT, locale:false };
 let compiti = [];
 let regole  = {};                 // { geografia:0 }  0=lunedì … 6=domenica
 let dirty   = new Set();
@@ -482,7 +519,7 @@ function scache(){
   try{
     const v = JSON.parse(localStorage.getItem(LS)||'null');
     if(!v) return false;
-    if(v.cfg && v.cfg.url) cfg = v.cfg;
+    if(v.cfg && (v.cfg.url || v.cfg.locale)) cfg = v.cfg;
     compiti = v.compiti || [];
     regole  = v.regole  || {};
     dirty   = new Set(v.dirty || []);
@@ -512,7 +549,7 @@ async function carica(){
 }
 
 function salva(){
-  if(!cfg.url){ cache(); return; }
+  if(!cfg.url){ cache(); sync('ok','Salvato su questo dispositivo'); return; }
   sync('wait','Salvo…');
   clearTimeout(saveT);
   saveT = setTimeout(async ()=>{
@@ -620,7 +657,11 @@ function cardCompito(c){
 }
 
 function render(){
-  if(!cfg.url){ $('#setup').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#fab').classList.add('hidden'); return; }
+  if(!cfg.url && !cfg.locale){
+    $('#setup').classList.remove('hidden'); $('#app').classList.add('hidden');
+    $('#fab').classList.add('hidden'); return;
+  }
+  if(!cfg.url) sync('ok','Solo su questo dispositivo');
   if($('#opts').classList.contains('hidden')){
     $('#setup').classList.add('hidden');
     $('#app').classList.remove('hidden');
@@ -813,9 +854,100 @@ function renderRegole(){
   }
 }
 
+function collega(url, tok){
+  cfg = { url:url, tok:tok, locale:false };
+  // Tutto quello che c'e' qui dentro va spinto sul foglio, altrimenti
+  // collegarsi dopo qualche giorno d'uso locale butterebbe via il lavoro.
+  attivi().forEach(c=>dirty.add(c.id));
+  compiti.filter(c=>c.deleted).forEach(c=>dirty.add(c.id));
+  cache();
+  $('#setup').classList.add('hidden');
+  render();
+  if(dirty.size) salva(); else carica();
+}
+
+function nuovoToken(){
+  return Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,6);
+}
+
 function linkCondivisione(){
   const base = location.origin + location.pathname;
   return base + '#s=' + encodeURIComponent(cfg.url) + '&t=' + encodeURIComponent(cfg.tok);
+}
+
+function renderSync(){
+  const box = $('#syncBox');
+  box.innerHTML = '';
+
+  if(cfg.url){
+    box.innerHTML =
+      '<div class="ok-box">✓ Collegato al Google Foglio</div>' +
+      '<p>Questo link configura l\'app da sola: chi lo apre non deve impostare niente ' +
+      'né avere un account Google. Mandalo su WhatsApp e fai aggiungere l\'icona alla schermata Home.</p>' +
+      '<div class="code" id="shareLink">' + linkCondivisione() + '</div>' +
+      '<div class="sheet-actions" style="margin-bottom:22px">' +
+        '<button class="btn btn-primary" id="btnCopy">Copia link</button>' +
+      '</div>';
+    $('#btnCopy').onclick = async ()=>{
+      try{ await navigator.clipboard.writeText(linkCondivisione()); toast('Link copiato'); }
+      catch(e){ toast('Copialo a mano dal riquadro'); }
+    };
+    return;
+  }
+
+  if(!cfg.tok) { cfg.tok = nuovoToken(); cache(); }
+
+  box.innerHTML =
+    '<p>Adesso i compiti stanno solo qui. Per vederli anche dagli altri telefoni serve ' +
+    'un Google Foglio tuo: lo fai una volta, in cinque minuti, e non si tocca più. ' +
+    'Il foglio resta nel tuo Drive e gli altri non devono avere un account Google.</p>' +
+    '<ol class="steps">' +
+      '<li>Tocca <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a>: ' +
+         'si apre un Foglio Google vuoto, tuo. Chiamalo <b>Compiti Ilaria</b>.</li>' +
+      '<li>Menu <b>Estensioni → Apps Script</b>. Si apre una scheda nuova con dentro poche righe di codice: ' +
+         'selezionale tutte e cancellale.</li>' +
+      '<li>Premi qui sotto <b>Copia il codice</b> e incollalo in quella pagina vuota. ' +
+         'Il token è già dentro, non devi cambiare niente. Salva con l\'icona del dischetto.</li>' +
+      '<li>In alto a destra <b>Distribuisci → Nuova distribuzione</b>. Clicca l\'ingranaggio ' +
+         'accanto a <i>Seleziona tipo</i> e scegli <b>App web</b>.</li>' +
+      '<li>Imposta <i>Esegui come</i>: <b>Io</b> — <i>Chi ha accesso</i>: <b>Chiunque</b>. Poi <b>Distribuisci</b>.</li>' +
+      '<li>Google chiede di autorizzare e avvisa che l\'app non è verificata: è la tua. ' +
+         'Vai su <b>Avanzate → Apri progetto (non sicuro)</b> e <b>Consenti</b>.</li>' +
+      '<li>Copia l\'<b>URL dell\'app web</b> che compare (finisce con <code>/exec</code>) e incollalo qui sotto.</li>' +
+    '</ol>' +
+    '<div class="sheet-actions" style="margin-bottom:18px">' +
+      '<button class="btn btn-primary" id="btnCode">Copia il codice</button>' +
+    '</div>' +
+    '<div class="field"><label>Token generato per te</label>' +
+      '<input type="text" id="optTok" value="' + cfg.tok + '" readonly></div>' +
+    '<div class="field"><label>URL dell\'app web</label>' +
+      '<input type="text" id="optUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
+    '<div class="sheet-actions" style="margin-bottom:22px">' +
+      '<button class="btn btn-primary" id="btnLink">Collega il foglio</button>' +
+    '</div>';
+
+  $('#btnCode').onclick = async ()=>{
+    try{
+      const r = await fetch('apps-script.gs');
+      if(!r.ok) throw new Error('fetch');
+      const src = (await r.text()).replace(
+        /var TOKEN = '[^']*';/,
+        "var TOKEN = '" + cfg.tok + "';");
+      await navigator.clipboard.writeText(src);
+      toast('Codice copiato — incollalo in Apps Script');
+    }catch(e){
+      toast('Non riesco a copiare: apri apps-script.gs dal repository');
+    }
+  };
+  $('#btnLink').onclick = ()=>{
+    const u = $('#optUrl').value.trim();
+    if(!/^https:\/\/script\.google\.com\/.*\/exec$/.test(u)){
+      toast('Serve l\'URL che finisce con /exec'); return;
+    }
+    collega(u, cfg.tok);
+    toast('Collegato — sincronizzo…');
+    apriOpzioni();
+  };
 }
 
 function apriOpzioni(){
@@ -823,7 +955,7 @@ function apriOpzioni(){
   $('#opts').classList.toggle('hidden', !on);
   $('#app').classList.toggle('hidden', on);
   $('#fab').classList.toggle('hidden', on);
-  if(on){ renderRegole(); $('#shareLink').textContent = linkCondivisione(); }
+  if(on){ renderRegole(); renderSync(); }
   else render();
 }
 
@@ -894,9 +1026,9 @@ function init(){
     while(regole[n]!==undefined){ n='materia'+(++i); }
     regole[n]=0; renderRegole(); salva();
   };
-  $('#btnCopy').onclick = async ()=>{
-    try{ await navigator.clipboard.writeText(linkCondivisione()); toast('Link copiato'); }
-    catch(e){ toast('Copialo a mano dal riquadro'); }
+  $('#btnLocale').onclick = ()=>{
+    cfg = { url:'', tok:cfg.tok || nuovoToken(), locale:true };
+    cache(); $('#setup').classList.add('hidden'); render();
   };
   $('#btnExport').onclick = ()=>{
     const blob = new Blob([JSON.stringify({compiti,regole},null,2)],{type:'application/json'});
@@ -913,15 +1045,16 @@ function init(){
     cache(); render(); salva(); toast(vecchi.length+' archiviati');
   };
   $('#btnReset').onclick = ()=>{
-    if(!confirm('Scollegare questo dispositivo? I dati restano sul foglio.')) return;
+    const msg = cfg.url
+      ? 'Scollegare questo dispositivo? I compiti restano sul foglio.'
+      : 'Cancellare i compiti di questo dispositivo? Non sono su nessun foglio, si perdono.';
+    if(!confirm(msg)) return;
     localStorage.removeItem(LS); location.reload();
   };
   $('#btnSaveCfg').onclick = ()=>{
     const u = $('#inUrl').value.trim(), t = $('#inTok').value.trim();
     if(!u || !t){ toast('Servono URL e token'); return; }
-    cfg = { url:u, tok:t }; cache();
-    $('#setup').classList.add('hidden');
-    render(); carica();
+    collega(u, t);
   };
   $('#btnTheme').onclick = ()=>{
     const cur = document.documentElement.dataset.theme;
