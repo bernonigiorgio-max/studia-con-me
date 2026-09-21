@@ -960,17 +960,14 @@ function apriOpzioni(){
 }
 
 /* ══ Avvio ═══════════════════════════════════════════════════════════ */
+// Restituisce { url, tok } se la pagina e' stata aperta con un link
+// configurato, altrimenti null. Non tocca lo stato: ci pensa collega().
 function leggiHash(){
-  if(!location.hash) return false;
+  if(!location.hash) return null;
   const p = new URLSearchParams(location.hash.slice(1));
   const s = p.get('s'), t = p.get('t');
-  if(s && t){
-    cfg = { url:s, tok:t };
-    cache();
-    history.replaceState(null,'',location.pathname);   // via il token dalla barra
-    return true;
-  }
-  return false;
+  history.replaceState(null,'',location.pathname);   // via il token dalla barra
+  return (s && t) ? { url:s, tok:t } : null;
 }
 
 function init(){
@@ -978,11 +975,13 @@ function init(){
   if(tema) document.documentElement.dataset.theme = tema;
 
   scache();
-  leggiHash();
-  if(!cfg.url && SCRIPT_URL_DEFAULT) cfg = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT };
+  const dalLink = leggiHash();
+  if(!cfg.url && !cfg.locale && SCRIPT_URL_DEFAULT){
+    cfg = { url:SCRIPT_URL_DEFAULT, tok:TOKEN_DEFAULT, locale:false };
+  }
 
-  render();
-  if(cfg.url) carica();
+  if(dalLink) collega(dalLink.url, dalLink.tok);
+  else { render(); if(cfg.url) carica(); }
 
   // Tab
   document.querySelectorAll('.tab').forEach(b=>{
@@ -1063,6 +1062,13 @@ function init(){
     else delete document.documentElement.dataset.theme;
     try{ localStorage.setItem(LS+'-tema', next); }catch(e){}
   };
+
+  // Il link configurato aperto mentre l'app e' gia' aperta e' una
+  // navigazione nello stesso documento: init() non gira, serve questo.
+  window.addEventListener('hashchange', ()=>{
+    const l = leggiHash();
+    if(l){ collega(l.url, l.tok); toast('Foglio collegato'); }
+  });
 
   // Risincronizza quando torni sull'app
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) carica(); });
