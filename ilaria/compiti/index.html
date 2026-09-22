@@ -424,6 +424,13 @@
   <div class="sheet-actions">
     <button class="btn btn-ghost" style="flex:1" id="btnReset">Azzera questo dispositivo</button>
   </div>
+
+  <h2 style="font-size:1rem;margin-top:26px">Versione</h2>
+  <p>Questo dispositivo ha la versione <b id="ver">—</b>. Se su un altro dispositivo
+  il numero è diverso, quello indietro si aggiorna da qui.</p>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" style="flex:1" id="btnAgg">Aggiorna l'app</button>
+  </div>
 </div>
 
 <!-- ── APP ───────────────────────────────────────────── -->
@@ -509,6 +516,7 @@ const SCRIPT_URL_DEFAULT = '';
 const TOKEN_DEFAULT      = '';
 
 const LS = 'compiti-ilaria-v1';
+const VERSIONE = '6 · 22 set 2026';
 
 /* ══ Materie ═════════════════════════════════════════════════════════ */
 const MATERIE = {
@@ -1461,6 +1469,17 @@ function init(){
   $('#btnIncolla').onclick       = apriIncolla;
   $('#btnChiudiIncolla').onclick = apriIncolla;
   $('#btnElabora').onclick       = elabora;
+
+  // Versione e aggiornamento
+  $('#ver').textContent = VERSIONE;
+  $('#btnAgg').onclick = async ()=>{
+    toast('Cerco aggiornamenti…');
+    try{
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg){ await reg.update(); if(reg.waiting) reg.waiting.postMessage('attiva'); }
+    }catch(e){}
+    setTimeout(()=>location.reload(), 900);
+  };
 
   // Impostazioni
   $('#btnSet').onclick = apriOpzioni;

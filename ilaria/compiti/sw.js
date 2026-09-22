@@ -1,7 +1,7 @@
 /* Service worker minimo: guscio in cache, dati sempre dalla rete.
    La pagina usa "network first" cosi' un aggiornamento si vede subito;
    se sei offline riparte dalla copia in cache. */
-const CACHE = 'compiti-ilaria-v5';
+const CACHE = 'compiti-ilaria-v6';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -14,6 +14,11 @@ self.addEventListener('activate', e => {
       .then(k => Promise.all(k.filter(n => n !== CACHE).map(n => caches.delete(n))))
       .then(() => self.clients.claim())
   );
+});
+
+// L'app puo' chiedere di attivare subito una versione in attesa.
+self.addEventListener('message', e => {
+  if (e.data === 'attiva') self.skipWaiting();
 });
 
 self.addEventListener('fetch', e => {
