@@ -62,6 +62,25 @@ Il pulsante **📋 Da Nuvola**, nell'intestazione di *In arrivo*, apre un box in
 cui incollare il testo copiato da Nuvola (Compiti, vista settimana,
 seleziona tutto).
 
+Nuvola si copia in due modi, a seconda di come si seleziona, e vanno bene
+entrambi:
+
+| | Intestazione del giorno | Data |
+|---|---|---|
+| Testo semplice | `lun` e `21` su due righe | assente, viene dedotta |
+| Con i collegamenti | `lun[21](…?data=2026-09-21…)` | dentro il link |
+
+Senza data scritta, le date si ricavano agganciando la prima intestazione al
+giorno più vicino a oggi con quel nome e quel numero, e proseguendo in avanti:
+i cambi di mese e di anno tornano da soli. I due formati producono gli stessi
+identificativi, quindi passare dall'uno all'altro non crea doppioni.
+
+L'ancora del riconoscimento è la riga `Compiti assegnati …`, che ogni compito
+ha esattamente una volta: da lì si risale alla materia (l'ultima riga in
+maiuscolo sopra), al testo e all'argomento collegato. Regge righe vuote in
+più, il nome del docente mancante, materie non in maiuscolo e l'assenza
+dell'argomento.
+
 Premendo **Elabora** compare l'anteprima divisa in due:
 
 - **Da aggiungere** — i compiti dei giorni successivi a oggi, mai importati
