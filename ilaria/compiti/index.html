@@ -391,6 +391,17 @@
   </details>
 </div>
 
+<div class="setup hidden" id="cestino">
+  <h2>🗑 Cestino</h2>
+  <p>Qui finiscono i compiti eliminati e quelli archiviati. Restano a
+  disposizione finché non li svuoti tu: tocca una voce per riportarla indietro.</p>
+  <div id="listaCestino"></div>
+  <div class="sheet-actions" style="margin-top:18px">
+    <button class="btn btn-ghost" id="btnChiudiCestino">Chiudi</button>
+    <button class="btn btn-danger" style="flex:1" id="btnSvuota">Svuota il cestino</button>
+  </div>
+</div>
+
 <div class="setup hidden" id="incolla">
   <h2>📋 Incolla da Nuvola</h2>
   <p>Su Nuvola apri <b>Compiti</b> nella vista settimana, seleziona tutto e incolla qui sotto.
@@ -421,6 +432,9 @@
   <div class="sheet-actions" style="margin-bottom:10px">
     <button class="btn btn-ghost" style="flex:1" id="btnExport">Esporta JSON</button>
     <button class="btn btn-ghost" style="flex:1" id="btnArchive">Archivia fatti</button>
+  </div>
+  <div class="sheet-actions" style="margin-bottom:10px">
+    <button class="btn btn-ghost" style="flex:1" id="btnCestino">🗑 Cestino</button>
   </div>
   <div class="sheet-actions">
     <button class="btn btn-ghost" style="flex:1" id="btnReset">Azzera questo dispositivo</button>
@@ -517,7 +531,7 @@ const SCRIPT_URL_DEFAULT = '';
 const TOKEN_DEFAULT      = '';
 
 const LS = 'compiti-ilaria-v1';
-const VERSIONE = '7 · 22 set 2026';
+const VERSIONE = '8 · 22 set 2026';
 
 /* ══ Materie ═════════════════════════════════════════════════════════ */
 const MATERIE = {
@@ -926,7 +940,11 @@ function nuovo(dati){
 }
 
 const attivi   = () => compiti.filter(c=>!c.deleted);
-const inArrivo = () => attivi().filter(c=>!c.giorno && !c.fatto);
+// Anche i fatti restano visibili: senza giorno assegnato non avrebbero
+// nessun'altra casella dove comparire, e sparirebbero del tutto.
+const inArrivo = () => attivi().filter(c=>!c.giorno)
+                               .sort((a,b)=>(a.fatto?1:0)-(b.fatto?1:0));
+const daFare   = () => inArrivo().filter(c=>!c.fatto);
 const inRitardo= () => attivi().filter(c=>c.giorno && c.giorno < oggi() && !c.fatto)
                                .sort((a,b)=>a.giorno<b.giorno?-1:1);
 const delGiorno= g  => attivi().filter(c=>c.giorno===g)
@@ -1003,7 +1021,8 @@ function render(){
     $('#fab').classList.add('hidden'); return;
   }
   if(!cfg.url) sync('ok','Solo su questo dispositivo');
-  if($('#opts').classList.contains('hidden') && $('#incolla').classList.contains('hidden')){
+  if($('#opts').classList.contains('hidden') && $('#incolla').classList.contains('hidden')
+     && $('#cestino').classList.contains('hidden')){
     $('#setup').classList.add('hidden');
     $('#app').classList.remove('hidden');
     $('#fab').classList.remove('hidden');
@@ -1033,14 +1052,14 @@ function renderPianifica(){
 
   // In arrivo
   const arr = inArrivo();
-  $('#cntIn').textContent = arr.length;
+  $('#cntIn').textContent = arr.filter(c=>!c.fatto).length;
   const lIn = $('#listIn'); lIn.innerHTML='';
   if(!arr.length){
     lIn.innerHTML = '<div class="empty"><span class="big">✅</span>Nessun compito da pianificare.<br>Usa il <b>+</b> per aggiungerne uno dal diario.</div>';
   } else {
     arr.forEach(c=>lIn.appendChild(cardCompito(c)));
   }
-  const conRegola = arr.some(c=>suggerito(c.materia)!==null);
+  const conRegola = arr.some(c=>!c.fatto && suggerito(c.materia)!==null);
   $('#btnRules').classList.toggle('hidden', !conRegola);
 
   // Settimana
@@ -1173,6 +1192,80 @@ function salvaSheet(){
 }
 
 /* ══ Impostazioni ════════════════════════════════════════════════════ */
+/* ══ Cestino ═════════════════════════════════════════════════════════ */
+const cestinati = () => compiti.filter(c=>c.deleted)
+                               .sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
+
+function apriCestino(){
+  const on = $('#cestino').classList.contains('hidden');
+  $('#cestino').classList.toggle('hidden', !on);
+  $('#app').classList.toggle('hidden', on);
+  $('#fab').classList.toggle('hidden', on);
+  if(on){ renderCestino(); window.scrollTo({top:0}); }
+  else render();
+}
+
+function renderCestino(){
+  const box = $('#listaCestino'); box.innerHTML = '';
+  const voci = cestinati();
+
+  if(!voci.length){
+    box.innerHTML = '<div class="empty"><span class="big">✨</span>Il cestino è vuoto.</div>';
+    $('#btnSvuota').disabled = true;
+    $('#btnSvuota').style.opacity = '.5';
+    return;
+  }
+  $('#btnSvuota').disabled = false;
+  $('#btnSvuota').style.opacity = '1';
+
+  voci.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'voce off';
+    el.style.setProperty('--mat', colore(c.materia));
+
+    const b = document.createElement('div');
+    b.style.flex = '1'; b.style.minWidth = '0';
+    const m = document.createElement('div');
+    m.className = 'v-mat'; m.style.setProperty('--mat', colore(c.materia));
+    m.textContent = (c.materia || 'Compito') +
+      (c.dataOriginale ? '  ·  da portare ' + etichettaBreve(c.dataOriginale) : '');
+    const t = document.createElement('div');
+    t.className = 'v-txt'; t.textContent = c.testo || '(senza descrizione)';
+    b.appendChild(m); b.appendChild(t);
+    if(c.note){
+      const n = document.createElement('div'); n.className='nota'; n.textContent=c.note;
+      b.appendChild(n);
+    }
+
+    const rip = document.createElement('button');
+    rip.className = 'mini'; rip.textContent = 'Ripristina';
+    rip.style.flexShrink = '0'; rip.style.alignSelf = 'center';
+    rip.onclick = ev => {
+      ev.stopPropagation();
+      c.deleted = false;
+      c.fatto = false;          // altrimenti, senza giorno, resterebbe invisibile
+      tocca(c); cache(); salva(); renderCestino();
+      toast('Ripristinato in "In arrivo"');
+    };
+
+    el.appendChild(b); el.appendChild(rip);
+    box.appendChild(el);
+  });
+}
+
+function svuotaCestino(){
+  const voci = cestinati();
+  if(!voci.length) return;
+  if(!confirm('Elimino definitivamente ' + voci.length +
+              (voci.length===1 ? ' compito' : ' compiti') +
+              '? Questa non si annulla.')) return;
+  const ids = new Set(voci.map(c=>c.id));
+  compiti = compiti.filter(c=>!ids.has(c.id));
+  ids.forEach(id=>dirty.delete(id));
+  cache(); renderCestino(); render();
+  toast(voci.length + ' eliminati definitivamente');
+}
+
 /* ══ Incolla da Nuvola ═══════════════════════════════════════════════ */
 let daImportare = null;
 
@@ -1290,6 +1383,7 @@ function confermaIncolla(){
       // Gia' presente (magari eliminato): lo riporto in vita senza
       // toccare il giorno assegnato e le note che ci hai scritto.
       gia.deleted = false;
+      gia.fatto   = false;          // senza questo tornava invisibile
       gia.materia = v.materia; gia.testo = v.testo;
       gia.dataOriginale = v.dataConsegna;
       tocca(gia); ripresi++;
@@ -1574,7 +1668,7 @@ function init(){
   // Regole
   $('#btnRules').onclick = ()=>{
     let n=0;
-    inArrivo().forEach(c=>{
+    daFare().forEach(c=>{
       const s = suggerito(c.materia);
       if(s===null) return;
       const lun = piuGiorni(lunediDi(new Date()), offset*7);
@@ -1583,6 +1677,11 @@ function init(){
     cache(); render(); salva();
     toast(n ? n+' compit'+(n===1?'o spostato':'i spostati') : 'Nessuna regola applicabile');
   };
+
+  // Cestino
+  $('#btnCestino').onclick       = ()=>{ apriOpzioni(); apriCestino(); };
+  $('#btnChiudiCestino').onclick = apriCestino;
+  $('#btnSvuota').onclick        = svuotaCestino;
 
   // Incolla da Nuvola
   $('#btnIncolla').onclick       = apriIncolla;
