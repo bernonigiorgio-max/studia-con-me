@@ -698,6 +698,42 @@ function scache(){
 }
 
 /* ══ Rete ════════════════════════════════════════════════════════════ */
+
+/* Interroga il foglio e dice *perche'* non risponde, invece di dare la
+   colpa alla connessione. Un Apps Script distribuito senza "Chiunque"
+   rimanda alla pagina di accesso di Google: il browser blocca quella
+   risposta e la fetch fallisce come se si fosse offline, quindi la
+   distinzione va fatta a mano. */
+async function diagnosi(){
+  if(!cfg.url) return { ok:false, causa:'nessun-foglio' };
+  try{
+    const r = await fetch(cfg.url + '?t=' + encodeURIComponent(cfg.tok));
+    let j = null;
+    const txt = await r.text();
+    try{ j = JSON.parse(txt); }catch(e){}
+    if(!j)               return { ok:false, causa:'accesso', http:r.status };
+    if(j.error==='token')return { ok:false, causa:'token' };
+    if(!j.ok)            return { ok:false, causa:'script', dett:j.error||'' };
+    return { ok:true, n:(j.compiti||[]).length };
+  }catch(e){
+    return { ok:false, causa: navigator.onLine ? 'accesso' : 'offline' };
+  }
+}
+
+const SPIEGA = {
+  'offline'    : 'Sei senza connessione. I compiti restano qui e partono appena torni online.',
+  'token'      : 'Il foglio risponde, ma rifiuta il token: quello dell\'app e quello scritto nell\'Apps Script sono diversi. Succede se hai distribuito lasciando la riga TOKEN com\'era, o se l\'app e\' stata collegata a un foglio precedente.',
+  'accesso'    : 'Il foglio non risponde con dati. Quasi sempre significa che nella distribuzione "Chi ha accesso" non e\' su "Chiunque", oppure che l\'indirizzo non e\' quello giusto (deve finire con /exec).',
+  'script'     : 'Lo script ha risposto con un errore suo.',
+  'nessun-foglio': 'Nessun foglio collegato.'
+};
+const BREVE = {
+  'offline':'Offline — dati locali',
+  'token'  :'Token rifiutato — vedi Impostazioni',
+  'accesso':'Il foglio non risponde — vedi Impostazioni',
+  'script' :'Errore dello script — vedi Impostazioni'
+};
+
 async function carica(){
   if(!cfg.url) return;
   sync('wait','Carico…');
@@ -714,7 +750,8 @@ async function carica(){
     cache(); render();
     if(dirty.size) salva();
   }catch(e){
-    sync('err','Offline — dati locali');
+    const d = await diagnosi();
+    sync('err', BREVE[d.causa] || 'Non riesco a leggere il foglio');
   }
 }
 
@@ -741,7 +778,8 @@ function salva(){
       sync('ok','Salvato');
       cache(); render();
     }catch(e){
-      sync('err','Non salvato — riprovo');
+      const d = await diagnosi();
+      sync('err', 'Non salvato · ' + (BREVE[d.causa] || 'foglio irraggiungibile'));
       cache();
     }
   }, 700);
@@ -1187,23 +1225,108 @@ function linkCondivisione(){
   return base + '#s=' + encodeURIComponent(cfg.url) + '&t=' + encodeURIComponent(cfg.tok);
 }
 
+async function provaConnessione(){
+  const e = $('#esito');
+  e.innerHTML = '<div class="riepilogo">Provo…</div>';
+  const d = await diagnosi();
+
+  if(d.ok){
+    $('#statoFoglio').textContent = '✓ Collegato e funzionante';
+    e.innerHTML = '';
+    const r = document.createElement('div');
+    r.className = 'riepilogo';
+    r.textContent = 'Tutto a posto: il foglio risponde e contiene ' + d.n +
+                    (d.n===1 ? ' compito.' : ' compiti.');
+    e.appendChild(r);
+    carica();
+    return;
+  }
+
+  $('#statoFoglio').textContent = '✕ Collegato, ma il foglio non risponde';
+  $('#statoFoglio').style.background = 'var(--late-soft)';
+  $('#statoFoglio').style.color = 'var(--late)';
+
+  e.innerHTML = '';
+  const r = document.createElement('div');
+  r.className = 'riepilogo';
+  r.style.background = 'var(--late-soft)';
+  r.style.color = 'var(--late)';
+  r.textContent = SPIEGA[d.causa] || 'Non riesco a raggiungere il foglio.';
+  e.appendChild(r);
+
+  if(d.causa === 'accesso' || d.causa === 'token'){
+    const c = document.createElement('div');
+    c.className = 'hint'; c.style.marginTop = '10px';
+    c.innerHTML = d.causa === 'accesso'
+      ? 'Da controllare nell\'Apps Script: <b>Distribuisci → Gestisci distribuzioni</b>, ' +
+        'icona matita, e verifica che <i>Chi ha accesso</i> sia <b>Chiunque</b> ' +
+        '(non "Chiunque con un account Google"). Se cambi qualcosa devi fare ' +
+        '<b>Nuova versione → Distribuisci</b>, altrimenti resta attiva la vecchia.'
+      : 'Apri l\'Apps Script del foglio e confronta la prima riga <code>var TOKEN</code> ' +
+        'con il token qui sopra. Se sono diversi, usa <b>Cambia foglio</b> e incolla ' +
+        'quello giusto: i compiti che hai qui non si perdono.';
+    e.appendChild(c);
+  }
+}
+
+function cambiaFoglio(){
+  if(!confirm('Scollego il foglio per ricollegarne uno. I compiti che hai su questo ' +
+              'dispositivo restano, e verranno caricati sul foglio nuovo. Procedo?')) return;
+  // Tutto torna "da inviare": appena ricollegato, risale sul foglio.
+  attivi().forEach(c=>dirty.add(c.id));
+  cfg = { url:'', tok:cfg.tok, locale:true };
+  cache(); renderSync(); render();
+  toast('Scollegato — ora ricollega il foglio');
+}
+
 function renderSync(){
   const box = $('#syncBox');
   box.innerHTML = '';
 
   if(cfg.url){
     box.innerHTML =
-      '<div class="ok-box">✓ Collegato al Google Foglio</div>' +
+      '<div class="ok-box" id="statoFoglio">✓ Collegato al Google Foglio</div>' +
+      '<p>Collegato vuol dire che l\'indirizzo è salvato qui. Per sapere se il foglio ' +
+      '<b>risponde davvero</b>, premi Prova la connessione.</p>' +
+      '<div class="sheet-actions" style="margin-bottom:8px">' +
+        '<button class="btn btn-primary" id="btnProva">Prova la connessione</button>' +
+      '</div>' +
+      '<div id="esito"></div>' +
+
+      '<div class="field" style="margin-top:18px"><label>Indirizzo dell\'Apps Script</label>' +
+        '<div class="code" id="urlAttuale"></div></div>' +
+      '<div class="field"><label>Token in uso dall\'app</label>' +
+        '<div class="code" id="tokAttuale"></div>' +
+        '<p class="hint" style="margin-top:6px">Deve essere identico alla riga ' +
+        '<code>var TOKEN = \'…\';</code> del tuo Apps Script.</p></div>' +
+      '<div class="sheet-actions" style="margin-bottom:22px">' +
+        '<button class="btn btn-ghost" style="flex:1" id="btnApri">Apri l\'indirizzo in una scheda</button>' +
+        '<button class="btn btn-ghost" style="flex:1" id="btnCambia">Cambia foglio</button>' +
+      '</div>' +
+
+      '<h2 style="font-size:1rem">Condividi l\'app</h2>' +
       '<p>Questo link configura l\'app da sola: chi lo apre non deve impostare niente ' +
       'né avere un account Google. Mandalo su WhatsApp e fai aggiungere l\'icona alla schermata Home.</p>' +
-      '<div class="code" id="shareLink">' + linkCondivisione() + '</div>' +
+      '<div class="code" id="shareLink"></div>' +
       '<div class="sheet-actions" style="margin-bottom:22px">' +
         '<button class="btn btn-primary" id="btnCopy">Copia link</button>' +
       '</div>';
+
+    $('#urlAttuale').textContent = cfg.url;
+    $('#tokAttuale').textContent = cfg.tok || '(nessuno)';
+    $('#shareLink').textContent  = linkCondivisione();
+
     $('#btnCopy').onclick = async ()=>{
       try{ await navigator.clipboard.writeText(linkCondivisione()); toast('Link copiato'); }
       catch(e){ toast('Copialo a mano dal riquadro'); }
     };
+    $('#btnApri').onclick = ()=>{
+      // In una scheda vera si vede se arriva il JSON oppure la pagina di
+      // accesso di Google: e' la prova piu' chiara di tutte.
+      window.open(cfg.url + '?t=' + encodeURIComponent(cfg.tok), '_blank', 'noopener');
+    };
+    $('#btnCambia').onclick = cambiaFoglio;
+    $('#btnProva').onclick  = provaConnessione;
     return;
   }
 
@@ -1230,8 +1353,10 @@ function renderSync(){
     '<div class="sheet-actions" style="margin-bottom:18px">' +
       '<button class="btn btn-primary" id="btnCode">Copia il codice</button>' +
     '</div>' +
-    '<div class="field"><label>Token generato per te</label>' +
-      '<input type="text" id="optTok" value="' + cfg.tok + '" readonly></div>' +
+    '<div class="field"><label>Token</label>' +
+      '<input type="text" id="optTok" value="' + cfg.tok + '">' +
+      '<p class="hint" style="margin-top:6px">Generato per te. Se il tuo Apps Script ne ' +
+      'ha già uno diverso, incolla qui quello.</p></div>' +
     '<div class="field"><label>URL dell\'app web</label>' +
       '<input type="text" id="optUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>' +
     '<div class="sheet-actions" style="margin-bottom:22px">' +
@@ -1256,7 +1381,9 @@ function renderSync(){
     if(!/^https:\/\/script\.google\.com\/.*\/exec$/.test(u)){
       toast('Serve l\'URL che finisce con /exec'); return;
     }
-    collega(u, cfg.tok);
+    const t = ($('#optTok').value || '').trim();
+    if(!t){ toast('Il token non può essere vuoto'); return; }
+    collega(u, t);
     toast('Collegato — sincronizzo…');
     apriOpzioni();
   };
@@ -1361,10 +1488,13 @@ function init(){
     cache(); render(); salva(); toast(vecchi.length+' archiviati');
   };
   $('#btnReset').onclick = ()=>{
-    const msg = cfg.url
-      ? 'Scollegare questo dispositivo? I compiti restano sul foglio.'
-      : 'Cancellare i compiti di questo dispositivo? Non sono su nessun foglio, si perdono.';
-    if(!confirm(msg)) return;
+    if(!confirm(
+      'ATTENZIONE: cancella i compiti di questo dispositivo.\n\n' +
+      'Sono al sicuro solo se la sincronizzazione ha funzionato davvero ' +
+      '(Impostazioni → Prova la connessione). Se il foglio non risponde, ' +
+      'si perdono.\n\nPer cambiare foglio senza cancellare niente usa ' +
+      '"Cambia foglio".\n\nProcedo con la cancellazione?')) return;
+    if(!confirm('Sicuro? Non si torna indietro. Hai esportato il JSON?')) return;
     localStorage.removeItem(LS); location.reload();
   };
   $('#btnSaveCfg').onclick = ()=>{
