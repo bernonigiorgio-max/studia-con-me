@@ -394,6 +394,7 @@
 <div class="setup hidden" id="incolla">
   <h2>📋 Incolla da Nuvola</h2>
   <p>Su Nuvola apri <b>Compiti</b> nella vista settimana, seleziona tutto e incolla qui sotto.
+  Va bene comunque tu copi: con o senza i collegamenti, anche se le date non compaiono.
   Tengo solo i compiti dei giorni <b>successivi a oggi</b> e riconosco quelli già importati,
   così non si creano doppioni.</p>
   <div class="field">
@@ -516,7 +517,7 @@ const SCRIPT_URL_DEFAULT = '';
 const TOKEN_DEFAULT      = '';
 
 const LS = 'compiti-ilaria-v1';
-const VERSIONE = '6 · 22 set 2026';
+const VERSIONE = '7 · 22 set 2026';
 
 /* ══ Materie ═════════════════════════════════════════════════════════ */
 const MATERIE = {
@@ -537,13 +538,22 @@ function colore(m){
 }
 
 /* ══ Riconoscimento del testo copiato da Nuvola ═══════════════════════
-   La data di consegna e' quella dell'intestazione del giorno, che porta
-   sempre data=YYYY-MM-DD dentro il link: e' un'ancora molto piu' solida
-   del nome del giorno scritto a parole.
-   Le intestazioni possono comparire anche a meta' riga ("Nessun compito
-   lun[28](...)"), percio' si cercano su tutto il testo, non riga a riga. */
+   Nuvola si copia in due modi, a seconda di come si seleziona:
 
-const RE_GIORNO = /(?:lun|mar|mer|gio|ven|sab|dom)\s*\[\s*\d+\s*\]\s*\([^)]*?data=(\d{4}-\d{2}-\d{2})[^)]*\)/gi;
+   A) testo semplice        B) con i collegamenti (Markdown)
+      lun                      lun[21](…?data=2026-09-21…)
+      21                       * INGLESE - LINGUA INGLESE
+      INGLESE - …              …
+      …                        Argomento collegato[Accoglienza](…)
+      Argomento collegato
+      Accoglienza
+
+   Nel caso A la data non c'e': ci sono solo il nome del giorno e il
+   numero, quindi va dedotta. Nel caso B la data e' dentro il link.
+   L'ancora comune e' la riga "Compiti assegnati …": ogni compito ne ha
+   esattamente una, e da li' si risale a materia, testo e argomento. */
+
+const GIORNI_BREVI = ['lun','mar','mer','gio','ven','sab','dom'];
 
 const ALIAS_MATERIE = [
   [/francese/i,                'Francese'],
@@ -566,79 +576,188 @@ const ALIAS_MATERIE = [
 ];
 
 function normalizzaMateria(grezza){
-  const g = String(grezza || '').trim();
+  const g = String(grezza || '').replace(/\s+/g, ' ').trim();
   if (!g) return '';
   for (const [re, nome] of ALIAS_MATERIE) if (re.test(g)) return nome;
-  // Nessun alias noto: iniziale maiuscola per ogni parola.
   return g.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (t, p, c) => p + c.toUpperCase());
 }
 
-// Identificativo stabile: lo stesso compito reincollato domani produce lo
-// stesso id, quindi viene riconosciuto come gia' importato.
 function impronta(s){
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
 
-// "   * testo", "*testo", "* * testo" -> "testo"
-const spoglia = r => r.replace(/^[\s*•-]+/, '').trim();
+const isoData = d => d.getFullYear() + '-' +
+  String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const indiceGiorno = d => (d.getDay()+6) % 7;     // 0 = lunedi
 
-function analizzaNuvola(testo){
-  const src = String(testo || '').replace(/\r\n?/g, '\n');
-  const compiti = [];
+// Via i collegamenti Markdown, tenendo il testo: [Epica](http://…) -> Epica
+const senzaLink = r => String(r).replace(/\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, '$1');
 
-  // 1. Dove comincia e dove finisce ogni intestazione di giorno
-  const teste = [];
-  let m;
-  RE_GIORNO.lastIndex = 0;
-  while ((m = RE_GIORNO.exec(src)) !== null) {
-    teste.push({ data: m[1], inizio: m.index, dopo: m.index + m[0].length });
-  }
-  if (!teste.length) return { compiti, giorni: 0 };
+// "   * testo", "*testo", "- testo" -> "testo"
+const spoglia = r => String(r).replace(/^[\s*•·-]+/, '').trim();
 
-  for (let i = 0; i < teste.length; i++) {
-    const data = teste[i].data;
-    const fine = (i + 1 < teste.length) ? teste[i + 1].inizio : src.length;
-    const blocco = src.slice(teste[i].dopo, fine);
+// Una materia e' scritta quasi tutta in maiuscolo; il docente no.
+function sembraMateria(r){
+  const s = String(r || '').trim();
+  if (s.length < 3) return false;
+  const lettere = s.replace(/[^\p{L}]/gu, '');
+  if (lettere.length < 3) return false;
+  const maiuscole = s.replace(/[^\p{Lu}]/gu, '').length;
+  return maiuscole / lettere.length > 0.6;
+}
 
-    // Un blocco materia comincia con "* " a inizio riga. "*Portare..."
-    // (senza spazio) e "   * ..." (rientrato) non aprono un blocco.
-    for (const parte of blocco.split(/\n\*[ \t]+/).slice(1)) {
-      const righe = parte.split('\n');
-      const materia = normalizzaMateria(righe.shift());
-      if (!materia) continue;
+/* ── Date ──────────────────────────────────────────────────────────── */
 
-      // Taglio all'argomento collegato, che chiude sempre il blocco
-      let argomento = '';
-      const iArg = righe.findIndex(r => /Argomento collegato\s*\[/.test(r));
-      if (iArg !== -1) {
-        argomento = (righe[iArg].match(/Argomento collegato\s*\[([^\]]*)\]/) || [, ''])[1].trim();
-        righe.length = iArg;
-      }
-
-      // Il corpo sta dopo la riga "Compiti assegnati ...". Se quella riga
-      // non c'e' (formato diverso), si salta solo il nome del docente.
-      const iAss = righe.findIndex(r => /^\s*Compiti assegnati\b/i.test(r));
-      const assegnato = iAss !== -1
-        ? (righe[iAss].match(/^\s*Compiti assegnati\s+(.+?)\s*$/i) || [, ''])[1]
-        : '';
-      const corpo = righe.slice(iAss !== -1 ? iAss + 1 : 1);
-
-      const testoCompito = corpo.map(spoglia).filter(Boolean).join('\n');
-      if (!testoCompito) continue;
-
-      compiti.push({
-        id: 'nuvola-' + impronta(data + '|' + materia + '|' + testoCompito),
-        materia,
-        testo: testoCompito,
-        dataConsegna: data,
-        assegnato,
-        argomento
-      });
+// Data piu' vicina a "vicino" che cade in quel giorno della settimana
+// con quel numero di giorno del mese.
+function dataPiuVicina(gi, num, vicino){
+  for (let scarto = 0; scarto <= 220; scarto++){
+    for (const segno of (scarto === 0 ? [1] : [1, -1])){
+      const d = new Date(vicino);
+      d.setDate(d.getDate() + segno * scarto);
+      if (d.getDate() === num && indiceGiorno(d) === gi) return d;
     }
   }
+  return null;
+}
 
+// La prima intestazione si aggancia alla data piu' vicina a oggi; le
+// altre proseguono in avanti, cosi' i cambi di mese e di anno tornano
+// da soli senza che la data sia scritta da nessuna parte.
+function risolviDate(teste, oggiD){
+  let cursore = null;
+  for (const t of teste){
+    if (t.data){ cursore = new Date(t.data + 'T12:00:00'); continue; }
+    let d;
+    if (cursore === null){
+      d = dataPiuVicina(t.gi, t.num, oggiD);
+    } else {
+      d = new Date(cursore);
+      let n = 0;
+      do { d.setDate(d.getDate() + 1); n++; }
+      while (n <= 400 && !(d.getDate() === t.num && indiceGiorno(d) === t.gi));
+      if (n > 400) d = null;
+    }
+    if (d){ t.data = isoData(d); cursore = d; }
+  }
+  return teste;
+}
+
+/* ── Intestazioni dei giorni ───────────────────────────────────────── */
+
+function trovaTeste(righe){
+  const teste = [];
+  for (let i = 0; i < righe.length; i++){
+    const r = righe[i];
+
+    // B) "lun[21](…data=2026-09-21…)" oppure "lun 21" con la data nel link
+    const conLink = r.match(
+      /(lun|mar|mer|gio|ven|sab|dom)\s*\[?\s*(\d{1,2})\s*\]?\s*\([^)]*?data=(\d{4}-\d{2}-\d{2})/i);
+    if (conLink){
+      teste.push({ gi: GIORNI_BREVI.indexOf(conLink[1].toLowerCase()),
+                   num: +conLink[2], data: conLink[3], da: i + 1 });
+      continue;
+    }
+
+    // A) riga che FINISCE con il nome del giorno ("Nessun compito  lun"),
+    //    seguita da una riga con il solo numero.
+    const nome = r.match(/(?:^|\s)(lun|mar|mer|gio|ven|sab|dom)\s*$/i);
+    const dopo = righe[i+1] !== undefined ? String(righe[i+1]).trim() : '';
+    if (nome && /^\d{1,2}$/.test(dopo)){
+      teste.push({ gi: GIORNI_BREVI.indexOf(nome[1].toLowerCase()),
+                   num: +dopo, data: null, da: i + 2 });
+      i++;
+      continue;
+    }
+  }
+  // dove finisce il pezzo di ogni giorno
+  for (let k = 0; k < teste.length; k++){
+    teste[k].a = (k + 1 < teste.length)
+      ? (teste[k+1].da - (teste[k+1].data ? 1 : 2))
+      : righe.length;
+  }
+  return teste;
+}
+
+/* ── Compiti dentro un giorno ──────────────────────────────────────── */
+
+function compitiDelGiorno(righe, da, a, data){
+  const fetta = righe.slice(da, a);
+  const out = [];
+
+  // Ogni compito ha una riga "Compiti assegnati ..."
+  const ancore = [];
+  fetta.forEach((r, i) => { if (/^\s*Compiti assegnati\b/i.test(r)) ancore.push(i); });
+
+  for (let k = 0; k < ancore.length; k++){
+    const i = ancore[k];
+    const prossima = (k + 1 < ancore.length) ? ancore[k+1] : fetta.length;
+
+    // materia: ultima riga "in maiuscolo" prima dell'ancora
+    let materia = '';
+    for (let j = i - 1; j >= Math.max(0, i - 5); j--){
+      const t = senzaLink(fetta[j]).trim();
+      if (!t) continue;
+      if (sembraMateria(t)){ materia = t; break; }
+      if (!materia) materia = materia || '';
+    }
+    if (!materia){
+      // nessuna riga in maiuscolo: ripiego sulla penultima non vuota
+      const prec = [];
+      for (let j = i - 1; j >= 0 && prec.length < 2; j--){
+        const t = senzaLink(fetta[j]).trim();
+        if (t) prec.push(t);
+      }
+      materia = prec[1] || prec[0] || '';
+    }
+
+    // fine del corpo: "Argomento collegato" oppure la materia del compito dopo
+    let fine = (k + 1 < ancore.length) ? Math.max(i + 1, prossima - 2) : fetta.length;
+    let argomento = '';
+    for (let j = i + 1; j < fine; j++){
+      const t = String(fetta[j]);
+      const inLinea = t.match(/Argomento collegato\s*\[([^\]]*)\]/i);
+      if (inLinea){ argomento = inLinea[1].trim(); fine = j; break; }
+      if (/^\s*Argomento collegato\s*$/i.test(t)){
+        argomento = senzaLink(fetta[j+1] || '').trim();
+        fine = j; break;
+      }
+    }
+
+    const testo = fetta.slice(i + 1, fine)
+      .map(r => spoglia(senzaLink(r)))
+      .filter(Boolean)
+      .join('\n');
+    if (!testo) continue;
+
+    const mat = normalizzaMateria(materia);
+    out.push({
+      id: 'nuvola-' + impronta(data + '|' + mat + '|' + testo),
+      materia: mat,
+      testo,
+      dataConsegna: data,
+      assegnato: (String(fetta[i]).match(/^\s*Compiti assegnati\s+(.+?)\s*$/i) || [, ''])[1],
+      argomento
+    });
+  }
+  return out;
+}
+
+/* ── Ingresso ──────────────────────────────────────────────────────── */
+
+function analizzaNuvola(testo, oggiIso){
+  const righe = String(testo || '').replace(/\r\n?/g, '\n').split('\n');
+  const oggiD = oggiIso ? new Date(oggiIso + 'T12:00:00') : new Date();
+  oggiD.setHours(12, 0, 0, 0);
+
+  const teste = risolviDate(trovaTeste(righe), oggiD);
+  const compiti = [];
+  for (const t of teste){
+    if (!t.data) continue;
+    compiti.push(...compitiDelGiorno(righe, t.da, t.a, t.data));
+  }
   return { compiti, giorni: teste.length };
 }
 
@@ -1070,9 +1189,9 @@ function apriIncolla(){
 }
 
 function elabora(){
-  const r = analizzaNuvola($('#inNuvola').value);
+  const r = analizzaNuvola($('#inNuvola').value, oggi());
   if(!r.giorni){
-    toast('Non riconosco il formato — hai copiato la vista settimana?');
+    toast('Non trovo i giorni: copia dalla vista settimana, dall\'intestazione del primo giorno in poi');
     return;
   }
   const og = oggi();
