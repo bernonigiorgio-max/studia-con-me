@@ -252,6 +252,44 @@
     word-break:break-all;color:var(--ink-soft);margin-bottom:14px;
   }
   .hint{font-size:.82rem;line-height:1.6;color:var(--ink-faint)}
+
+  /* Note personali sulla card */
+  .nota{
+    font-size:.8rem;line-height:1.45;color:var(--ink-soft);margin-top:6px;
+    padding:6px 9px;background:var(--card2);border-radius:8px;
+    border-left:3px solid var(--line2);white-space:pre-wrap;
+  }
+
+  /* Anteprima dell'incolla da Nuvola */
+  .grp{margin-top:20px}
+  .grp h3{
+    font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-soft);display:flex;align-items:center;gap:8px;margin-bottom:9px;
+  }
+  .voce{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--card);border:1px solid var(--line);
+    border-left:4px solid var(--mat,#94a3b8);
+    border-radius:var(--r-sm);padding:10px 11px;margin-bottom:7px;cursor:pointer;
+  }
+  .voce.off{background:var(--late-soft);border-color:var(--late);border-left-color:var(--late)}
+  .voce.off .v-mat, .voce.off .v-txt{text-decoration:line-through;color:var(--late)}
+  .voce .box{
+    width:22px;height:22px;border-radius:6px;flex-shrink:0;margin-top:2px;
+    border:2px solid var(--line2);display:flex;align-items:center;justify-content:center;
+    font-size:.75rem;color:#fff;line-height:1;
+  }
+  .voce .box.on{background:var(--accent);border-color:var(--accent)}
+  .v-mat{font-size:.7rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mat,#64748b)}
+  .v-txt{font-size:.87rem;line-height:1.45;margin-top:2px;white-space:pre-wrap}
+  .v-why{
+    display:inline-block;margin-top:5px;font-size:.66rem;font-weight:800;
+    background:var(--late);color:#fff;padding:1px 7px;border-radius:20px;
+  }
+  .riepilogo{
+    background:var(--accent-soft);color:var(--accent-deep);border-radius:var(--r-sm);
+    padding:12px 14px;font-size:.87rem;font-weight:600;line-height:1.5;margin-top:16px;
+  }
   .setup details{
     margin-top:22px;border-top:1px solid var(--line);padding-top:16px;
   }
@@ -353,6 +391,21 @@
   </details>
 </div>
 
+<div class="setup hidden" id="incolla">
+  <h2>📋 Incolla da Nuvola</h2>
+  <p>Su Nuvola apri <b>Compiti</b> nella vista settimana, seleziona tutto e incolla qui sotto.
+  Tengo solo i compiti dei giorni <b>successivi a oggi</b> e riconosco quelli già importati,
+  così non si creano doppioni.</p>
+  <div class="field">
+    <textarea id="inNuvola" rows="6" placeholder="Incolla qui il testo copiato da Nuvola…"></textarea>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="btnChiudiIncolla">Chiudi</button>
+    <button class="btn btn-primary" id="btnElabora">Elabora</button>
+  </div>
+  <div id="anteprima"></div>
+</div>
+
 <!-- ── IMPOSTAZIONI ──────────────────────────────────── -->
 <div class="setup hidden" id="opts">
   <h2>Impostazioni</h2>
@@ -388,6 +441,7 @@
       <div class="sec-head">
         <h2>In arrivo</h2><span class="pill" id="cntIn">0</span>
         <span class="spacer"></span>
+        <button class="mini" id="btnIncolla">📋 Da Nuvola</button>
         <button class="mini hidden" id="btnRules">✦ Applica regole</button>
       </div>
       <div id="listIn"></div>
@@ -431,6 +485,10 @@
     <label>Altra data</label>
     <input type="date" id="shDate">
   </div>
+  <div class="field">
+    <label>Note personali</label>
+    <textarea id="shNote" rows="2" placeholder="es. lo fa con Giusy alle 18 · versione DSA · deve solo ripassare"></textarea>
+  </div>
   <div class="sheet-actions">
     <button class="btn btn-danger hidden" id="shDel">🗑</button>
     <button class="btn btn-ghost" id="shCancel">Annulla</button>
@@ -470,6 +528,112 @@ function colore(m){
   return '#94a3b8';
 }
 
+/* ══ Riconoscimento del testo copiato da Nuvola ═══════════════════════
+   La data di consegna e' quella dell'intestazione del giorno, che porta
+   sempre data=YYYY-MM-DD dentro il link: e' un'ancora molto piu' solida
+   del nome del giorno scritto a parole.
+   Le intestazioni possono comparire anche a meta' riga ("Nessun compito
+   lun[28](...)"), percio' si cercano su tutto il testo, non riga a riga. */
+
+const RE_GIORNO = /(?:lun|mar|mer|gio|ven|sab|dom)\s*\[\s*\d+\s*\]\s*\([^)]*?data=(\d{4}-\d{2}-\d{2})[^)]*\)/gi;
+
+const ALIAS_MATERIE = [
+  [/francese/i,                'Francese'],
+  [/ingles/i,                  'Inglese'],
+  [/spagnol/i,                 'Spagnolo'],
+  [/tedesc/i,                  'Tedesco'],
+  [/storia\s+dell'?’?arte/i, 'Storia dell’arte'],
+  [/arte|immagine/i,           'Arte'],
+  [/matemat|aritmet|geometr/i, 'Matematica'],
+  [/italian|antolog|gramm|epica/i, 'Italiano'],
+  [/geograf/i,                 'Geografia'],
+  [/stori/i,                   'Storia'],
+  [/scienz/i,                  'Scienze'],
+  [/tecnolog/i,                'Tecnologia'],
+  [/music/i,                   'Musica'],
+  [/motor|sportiv|educazione\s+fisica/i, 'Motoria'],
+  [/religion/i,                'Religione'],
+  [/civic/i,                   'Educazione civica'],
+  [/informat/i,                'Informatica']
+];
+
+function normalizzaMateria(grezza){
+  const g = String(grezza || '').trim();
+  if (!g) return '';
+  for (const [re, nome] of ALIAS_MATERIE) if (re.test(g)) return nome;
+  // Nessun alias noto: iniziale maiuscola per ogni parola.
+  return g.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (t, p, c) => p + c.toUpperCase());
+}
+
+// Identificativo stabile: lo stesso compito reincollato domani produce lo
+// stesso id, quindi viene riconosciuto come gia' importato.
+function impronta(s){
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+// "   * testo", "*testo", "* * testo" -> "testo"
+const spoglia = r => r.replace(/^[\s*•-]+/, '').trim();
+
+function analizzaNuvola(testo){
+  const src = String(testo || '').replace(/\r\n?/g, '\n');
+  const compiti = [];
+
+  // 1. Dove comincia e dove finisce ogni intestazione di giorno
+  const teste = [];
+  let m;
+  RE_GIORNO.lastIndex = 0;
+  while ((m = RE_GIORNO.exec(src)) !== null) {
+    teste.push({ data: m[1], inizio: m.index, dopo: m.index + m[0].length });
+  }
+  if (!teste.length) return { compiti, giorni: 0 };
+
+  for (let i = 0; i < teste.length; i++) {
+    const data = teste[i].data;
+    const fine = (i + 1 < teste.length) ? teste[i + 1].inizio : src.length;
+    const blocco = src.slice(teste[i].dopo, fine);
+
+    // Un blocco materia comincia con "* " a inizio riga. "*Portare..."
+    // (senza spazio) e "   * ..." (rientrato) non aprono un blocco.
+    for (const parte of blocco.split(/\n\*[ \t]+/).slice(1)) {
+      const righe = parte.split('\n');
+      const materia = normalizzaMateria(righe.shift());
+      if (!materia) continue;
+
+      // Taglio all'argomento collegato, che chiude sempre il blocco
+      let argomento = '';
+      const iArg = righe.findIndex(r => /Argomento collegato\s*\[/.test(r));
+      if (iArg !== -1) {
+        argomento = (righe[iArg].match(/Argomento collegato\s*\[([^\]]*)\]/) || [, ''])[1].trim();
+        righe.length = iArg;
+      }
+
+      // Il corpo sta dopo la riga "Compiti assegnati ...". Se quella riga
+      // non c'e' (formato diverso), si salta solo il nome del docente.
+      const iAss = righe.findIndex(r => /^\s*Compiti assegnati\b/i.test(r));
+      const assegnato = iAss !== -1
+        ? (righe[iAss].match(/^\s*Compiti assegnati\s+(.+?)\s*$/i) || [, ''])[1]
+        : '';
+      const corpo = righe.slice(iAss !== -1 ? iAss + 1 : 1);
+
+      const testoCompito = corpo.map(spoglia).filter(Boolean).join('\n');
+      if (!testoCompito) continue;
+
+      compiti.push({
+        id: 'nuvola-' + impronta(data + '|' + materia + '|' + testoCompito),
+        materia,
+        testo: testoCompito,
+        dataConsegna: data,
+        assegnato,
+        argomento
+      });
+    }
+  }
+
+  return { compiti, giorni: teste.length };
+}
+
 /* ══ Date ════════════════════════════════════════════════════════════ */
 const iso  = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const oggi = () => iso(new Date());
@@ -480,6 +644,12 @@ function lunediDi(d){
   return x;
 }
 function piuGiorni(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function etichettaBreve(s){
+  if(!s) return '';
+  const [a,m,g] = s.split('-').map(Number);
+  const d = new Date(a,m-1,g);
+  return GIORNI_C[(d.getDay()+6)%7].toLowerCase()+' '+g+' '+MESI[m-1].slice(0,3);
+}
 function etichetta(s){
   if(!s) return '';
   const [a,m,g] = s.split('-').map(Number);
@@ -620,9 +790,14 @@ function cardCompito(c){
 
   const body = document.createElement('div');
   body.className = 'body';
-  if(c.materia){
+  if(c.materia || c.dataOriginale){
     const m = document.createElement('span');
-    m.className='mat'; m.style.setProperty('--mat',colore(c.materia)); m.textContent=c.materia;
+    m.className='mat'; m.style.setProperty('--mat',colore(c.materia));
+    // Il giorno di consegna sta nel titolo: e' l'informazione che serve
+    // per decidere quando farlo fare.
+    m.textContent = (c.materia || 'Compito')
+      + (c.dataOriginale && c.dataOriginale!==c.giorno
+          ? '  ·  da portare '+etichettaBreve(c.dataOriginale) : '');
     body.appendChild(m);
   }
   const t = document.createElement('div');
@@ -635,14 +810,15 @@ function cardCompito(c){
     const b=document.createElement('span'); b.className='badge-late';
     b.textContent='in ritardo · '+etichetta(c.giorno); meta.appendChild(b);
   }
-  if(c.dataOriginale && c.dataOriginale!==c.giorno){
-    const b=document.createElement('span'); b.className='badge-src';
-    b.textContent='assegnato per '+etichetta(c.dataOriginale); meta.appendChild(b);
-  }
   if(c.fonte==='nuvola'){
     const b=document.createElement('span'); b.className='badge-src'; b.textContent='Nuvola'; meta.appendChild(b);
   }
   if(meta.children.length) body.appendChild(meta);
+
+  if(c.note){
+    const n=document.createElement('div'); n.className='nota'; n.textContent=c.note;
+    body.appendChild(n);
+  }
 
   el.appendChild(chk); el.appendChild(body);
   el.onclick = ()=>apriSheet(c.id);
@@ -662,7 +838,7 @@ function render(){
     $('#fab').classList.add('hidden'); return;
   }
   if(!cfg.url) sync('ok','Solo su questo dispositivo');
-  if($('#opts').classList.contains('hidden')){
+  if($('#opts').classList.contains('hidden') && $('#incolla').classList.contains('hidden')){
     $('#setup').classList.add('hidden');
     $('#app').classList.remove('hidden');
     $('#fab').classList.remove('hidden');
@@ -779,6 +955,7 @@ function apriSheet(id){
   $('#shMat').value  = c ? c.materia : '';
   $('#shTxt').value  = c ? c.testo   : '';
   $('#shDate').value = c && c.giorno ? c.giorno : '';
+  $('#shNote').value = c ? (c.note || '') : '';
   $('#shDel').classList.toggle('hidden', !c);
   renderChips(c ? c.giorno : '');
   $('#scrim').classList.add('on');
@@ -817,19 +994,154 @@ function salvaSheet(){
   const materia = $('#shMat').value.trim();
   const testo   = $('#shTxt').value.trim();
   const giorno  = $('#shDate').value || '';
+  const note    = $('#shNote').value.trim();
   if(!materia && !testo){ toast('Scrivi almeno la materia'); return; }
 
   if(editId){
     const c = compiti.find(x=>x.id===editId);
-    c.materia = materia; c.testo = testo; c.giorno = giorno;
+    c.materia = materia; c.testo = testo; c.giorno = giorno; c.note = note;
     tocca(c);
   } else {
-    nuovo({ materia, testo, giorno, dataOriginale: giorno, fonte:'manuale' });
+    nuovo({ materia, testo, giorno, note, dataOriginale: giorno, fonte:'manuale' });
   }
   chiudiSheet(); cache(); render(); salva();
 }
 
 /* ══ Impostazioni ════════════════════════════════════════════════════ */
+/* ══ Incolla da Nuvola ═══════════════════════════════════════════════ */
+let daImportare = null;
+
+function apriIncolla(){
+  const on = $('#incolla').classList.contains('hidden');
+  $('#incolla').classList.toggle('hidden', !on);
+  $('#app').classList.toggle('hidden', on);
+  $('#fab').classList.toggle('hidden', on);
+  if(on){
+    $('#inNuvola').value = ''; $('#anteprima').innerHTML = ''; daImportare = null;
+    window.scrollTo({top:0});
+    setTimeout(()=>$('#inNuvola').focus(), 120);
+  } else render();
+}
+
+function elabora(){
+  const r = analizzaNuvola($('#inNuvola').value);
+  if(!r.giorni){
+    toast('Non riconosco il formato — hai copiato la vista settimana?');
+    return;
+  }
+  const og = oggi();
+  daImportare = r.compiti.map(c=>{
+    const gia = compiti.find(x=>x.id===c.id);
+    let motivo = '';
+    if(c.dataConsegna <  og) motivo = 'giorno già passato';
+    else if(c.dataConsegna === og) motivo = 'è oggi';
+    else if(gia && gia.deleted)    motivo = 'importato prima, poi eliminato';
+    else if(gia)                   motivo = 'già importato';
+    return Object.assign({}, c, { motivo, incluso: !motivo });
+  });
+  if(!daImportare.length){
+    $('#anteprima').innerHTML =
+      '<div class="empty" style="margin-top:18px">Ho letto '+r.giorni+
+      ' giorni ma non ho trovato compiti.</div>';
+    return;
+  }
+  renderAnteprima();
+}
+
+function vocePreview(v){
+  const el = document.createElement('div');
+  el.className = 'voce' + (v.incluso ? '' : ' off');
+  el.style.setProperty('--mat', colore(v.materia));
+
+  const box = document.createElement('span');
+  box.className = 'box' + (v.incluso ? ' on' : '');
+  box.textContent = v.incluso ? '✓' : '';
+
+  const b = document.createElement('div');
+  b.style.flex = '1'; b.style.minWidth = '0';
+
+  const m = document.createElement('div');
+  m.className = 'v-mat'; m.style.setProperty('--mat', colore(v.materia));
+  m.textContent = v.materia + '  ·  da portare ' + etichettaBreve(v.dataConsegna);
+
+  const t = document.createElement('div');
+  t.className = 'v-txt'; t.textContent = v.testo;
+
+  b.appendChild(m); b.appendChild(t);
+  if(v.motivo){
+    const w = document.createElement('span');
+    w.className = 'v-why'; w.textContent = v.motivo;
+    b.appendChild(w);
+  }
+  el.appendChild(box); el.appendChild(b);
+  el.onclick = ()=>{ v.incluso = !v.incluso; renderAnteprima(); };
+  return el;
+}
+
+function renderAnteprima(){
+  const box = $('#anteprima'); box.innerHTML = '';
+  if(!daImportare) return;
+
+  const gruppo = (titolo, voci) => {
+    if(!voci.length) return;
+    const g = document.createElement('div'); g.className = 'grp';
+    const h = document.createElement('h3'); h.textContent = titolo + ' (' + voci.length + ')';
+    g.appendChild(h);
+    voci.forEach(v=>g.appendChild(vocePreview(v)));
+    box.appendChild(g);
+  };
+  gruppo('Da aggiungere',  daImportare.filter(v=>!v.motivo));
+  gruppo('Scartati — tocca per recuperarli', daImportare.filter(v=>v.motivo));
+
+  const n = daImportare.filter(v=>v.incluso).length;
+  const r = document.createElement('div');
+  r.className = 'riepilogo';
+  r.textContent = n
+    ? 'Finiranno in "In arrivo" ' + n + (n===1 ? ' compito' : ' compiti') +
+      ', da smistare nel giorno in cui farli.'
+    : 'Non hai selezionato niente.';
+  box.appendChild(r);
+
+  const az = document.createElement('div');
+  az.className = 'sheet-actions'; az.style.marginTop = '12px';
+  const ok = document.createElement('button');
+  ok.className = 'btn btn-primary';
+  ok.textContent = n ? 'Aggiungi ' + n + (n===1 ? ' compito' : ' compiti') : 'Aggiungi';
+  ok.disabled = !n;
+  ok.style.opacity = n ? '1' : '.5';
+  ok.onclick = confermaIncolla;
+  az.appendChild(ok);
+  box.appendChild(az);
+}
+
+function confermaIncolla(){
+  const scelti = (daImportare || []).filter(v=>v.incluso);
+  if(!scelti.length){ toast('Non hai selezionato niente'); return; }
+
+  let aggiunti = 0, ripresi = 0;
+  scelti.forEach(v=>{
+    const gia = compiti.find(x=>x.id===v.id);
+    if(gia){
+      // Gia' presente (magari eliminato): lo riporto in vita senza
+      // toccare il giorno assegnato e le note che ci hai scritto.
+      gia.deleted = false;
+      gia.materia = v.materia; gia.testo = v.testo;
+      gia.dataOriginale = v.dataConsegna;
+      tocca(gia); ripresi++;
+    } else {
+      nuovo({ id:v.id, materia:v.materia, testo:v.testo,
+              dataOriginale:v.dataConsegna, giorno:'', fonte:'nuvola' });
+      aggiunti++;
+    }
+  });
+
+  cache(); salva();
+  daImportare = null;
+  apriIncolla();
+  toast(aggiunti + (aggiunti===1 ? ' compito aggiunto' : ' compiti aggiunti') +
+        (ripresi ? ' · ' + ripresi + ' ripristinati' : ''));
+}
+
 function renderRegole(){
   const box = $('#rules'); box.innerHTML='';
   Object.keys(regole).forEach(m=>{
@@ -1017,6 +1329,11 @@ function init(){
     cache(); render(); salva();
     toast(n ? n+' compit'+(n===1?'o spostato':'i spostati') : 'Nessuna regola applicabile');
   };
+
+  // Incolla da Nuvola
+  $('#btnIncolla').onclick       = apriIncolla;
+  $('#btnChiudiIncolla').onclick = apriIncolla;
+  $('#btnElabora').onclick       = elabora;
 
   // Impostazioni
   $('#btnSet').onclick = apriOpzioni;
