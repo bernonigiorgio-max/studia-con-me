@@ -56,10 +56,37 @@ schermata Home*.
 Il token viene tolto dalla barra degli indirizzi appena letto e salvato in
 locale, così non resta nella cronologia.
 
+## Incolla da Nuvola
+
+Il pulsante **📋 Da Nuvola**, nell'intestazione di *In arrivo*, apre un box in
+cui incollare il testo copiato da Nuvola (Compiti, vista settimana,
+seleziona tutto).
+
+Premendo **Elabora** compare l'anteprima divisa in due:
+
+- **Da aggiungere** — i compiti dei giorni successivi a oggi, mai importati
+- **Scartati** — in rosso e barrati, con il motivo: *giorno già passato*,
+  *è oggi*, *già importato*, *importato prima, poi eliminato*
+
+Niente viene buttato via senza dirlo: ogni voce si tocca per invertirla,
+quindi uno scartato si recupera e un incluso si esclude. Poi **Aggiungi**.
+
+I compiti arrivano in *In arrivo* con il giorno di consegna nel titolo
+(`MATEMATICA · da portare gio 24 set`) e senza giorno di svolgimento: quello
+lo assegni tu, come per i compiti inseriti a mano.
+
+Reincollare lo stesso testo il giorno dopo non crea doppioni: l'identificativo
+di ogni compito deriva dal suo contenuto, quindi quelli già visti risultano
+*già importato*. Un compito ripescato fra gli scartati non perde il giorno
+assegnato né le note che ci avevi scritto.
+
 ## Uso
 
 - **In arrivo** — compiti senza giorno assegnato. Il `+` in basso ne aggiunge
-  uno a mano (quelli dettati sul diario).
+  uno a mano (quelli dettati sul diario), il **📋 Da Nuvola** ne importa in blocco.
+- **Note personali** — campo libero su ogni compito, per quello che serve a te:
+  *lo fa con Giusy alle 18*, *versione DSA*, *deve solo ripassare*. Compare
+  sulla card sotto il testo e non viene toccato dalle importazioni successive.
 - **Tap su un compito** → si apre la scheda con i giorni della settimana:
   un altro tap e il compito è spostato. Su computer funziona anche il
   trascinamento.
@@ -98,9 +125,10 @@ Google. Sempre disponibile Impostazioni → **Esporta JSON**.
 | `giorno` | il giorno in cui lo fa davvero (vuoto = In arrivo) |
 | `fatto` | TRUE / FALSE |
 | `fonte` | `manuale`, `diario`, `nuvola` |
-| `note` | libero |
+| `note` | note personali, scritte da te nell'editor |
 | `deleted` | cancellazione logica, ripulita dopo 60 giorni |
 
-Un eventuale importatore da Nuvola deve solo scrivere righe con
-`fonte = "nuvola"`, `giorno = ""` e `dataOriginale` valorizzato: arrivano in
-*In arrivo* pronte da smistare.
+I compiti importati da Nuvola hanno `fonte = "nuvola"`, `giorno = ""`,
+`dataOriginale` con la data di consegna e un `id` della forma
+`nuvola-<impronta>` derivato da data, materia e testo: è quello che rende
+riconoscibili i doppioni fra un incollaggio e il successivo.
