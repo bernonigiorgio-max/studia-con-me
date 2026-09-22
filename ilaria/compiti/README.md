@@ -103,6 +103,11 @@ assegnato né le note che ci avevi scritto.
 
 - **In arrivo** — compiti senza giorno assegnato. Il `+` in basso ne aggiunge
   uno a mano (quelli dettati sul diario), il **📋 Da Nuvola** ne importa in blocco.
+  Spuntandone uno non sparisce: scende in fondo barrato, e ritogliendo la spunta
+  torna dov'era. Il contatore conta solo quelli ancora da smistare.
+- **🗑 Cestino** (Impostazioni) — i compiti eliminati e quelli archiviati
+  restano qui finché non lo svuoti. **Ripristina** li riporta in *In arrivo*;
+  **Svuota il cestino** li elimina per sempre, con conferma.
 - **Note personali** — campo libero su ogni compito, per quello che serve a te:
   *lo fa con Giusy alle 18*, *versione DSA*, *deve solo ripassare*. Compare
   sulla card sotto il testo e non viene toccato dalle importazioni successive.
