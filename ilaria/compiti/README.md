@@ -114,6 +114,13 @@ assegnato né le note che ci avevi scritto.
 - **Tap su un compito** → si apre la scheda con i giorni della settimana:
   un altro tap e il compito è spostato. Su computer funziona anche il
   trascinamento.
+- **Più giorni per lo stesso compito** — nella scheda i giorni si selezionano
+  a piacere: uno, due, tre. Il compito compare in ognuno di quei giorni, e
+  ogni giorno si spunta per conto suo (*lunedì l'ha fatto, martedì no*). La
+  card mostra `2 di 3 giorni`. Le frecce ‹ › spostano la settimana dei chip,
+  e *Altra data* aggiunge un giorno fuori settimana.
+  Modificando testo, materia o note, la modifica vale per tutti i giorni;
+  deselezionando un giorno si toglie solo quello; il 🗑 elimina l'intera serie.
 - **✦ Applica regole** — se hai impostato *geografia → lunedì*, sistema da solo
   tutti i compiti di quella materia rimasti in arrivo. Le regole si gestiscono
   in Impostazioni.
@@ -141,12 +148,12 @@ Google. Sempre disponibile Impostazioni → **Esporta JSON**.
 
 | Colonna | Contenuto |
 |---|---|
-| `id` | identificativo generato dall'app |
+| `id` | identificativo generato dall'app. Un compito assegnato a più giorni ha un'occorrenza per giorno: la prima con l'id base, le altre con `~2`, `~3`. La parte prima di `~` è quella che le lega |
 | `createdAt` / `updatedAt` | ISO 8601, servono al merge |
 | `materia` | testo libero, decide il colore della card |
 | `testo` | cosa deve fare |
 | `dataOriginale` | il giorno per cui era stato assegnato |
-| `giorno` | il giorno in cui lo fa davvero (vuoto = In arrivo) |
+| `giorno` | il giorno in cui lo fa davvero (vuoto = In arrivo). Uno solo per riga: più giorni significa più righe della stessa serie |
 | `fatto` | TRUE / FALSE |
 | `fonte` | `manuale`, `diario`, `nuvola` |
 | `note` | note personali, scritte da te nell'editor |

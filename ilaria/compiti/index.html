@@ -252,6 +252,14 @@
     word-break:break-all;color:var(--ink-soft);margin-bottom:14px;
   }
   .hint{font-size:.82rem;line-height:1.6;color:var(--ink-faint)}
+  .riepilogo-giorni{
+    margin-top:9px;font-size:.8rem;line-height:1.5;color:var(--accent-deep);
+    background:var(--accent-soft);border-radius:9px;padding:8px 11px;font-weight:600;
+  }
+  .badge-serie{
+    background:var(--accent-soft);color:var(--accent-deep);font-weight:800;
+    padding:1px 7px;border-radius:20px;font-size:.65rem;
+  }
 
   /* Note personali sulla card */
   .nota{
@@ -500,8 +508,14 @@
     <textarea id="shTxt" rows="3" placeholder="es. Ripassare le regioni del Nord, pag. 84"></textarea>
   </div>
   <div class="field">
-    <label>Quando lo fa</label>
+    <label>Quando lo fa <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:500">— puoi sceglierne più di uno</span></label>
+    <div class="weeknav" style="margin:0 0 9px;padding:5px 6px">
+      <button type="button" id="shPrev">‹</button>
+      <div class="label" id="shWeek" style="font-size:.8rem"></div>
+      <button type="button" id="shNext">›</button>
+    </div>
     <div class="chips" id="shDays"></div>
+    <div id="shSel"></div>
   </div>
   <div class="field">
     <label>Altra data</label>
@@ -531,7 +545,7 @@ const SCRIPT_URL_DEFAULT = '';
 const TOKEN_DEFAULT      = '';
 
 const LS = 'compiti-ilaria-v1';
-const VERSIONE = '8 · 22 set 2026';
+const VERSIONE = '9 · 23 set 2026';
 
 /* ══ Materie ═════════════════════════════════════════════════════════ */
 const MATERIE = {
@@ -806,6 +820,8 @@ let dirty   = new Set();
 let offset  = 0;                  // settimane rispetto a quella corrente
 let tab     = 'pianifica';
 let editId  = null;
+let giorniSel  = new Set();   // giorni scelti nella scheda
+let chipOffset = 0;           // settimana mostrata dai chip
 let saveT   = null;
 
 const $ = s => document.querySelector(s);
@@ -926,6 +942,20 @@ function salva(){
   }, 700);
 }
 
+/* ══ Serie: uno stesso compito su piu' giorni ════════════════════════
+   Ogni giorno e' un'occorrenza a se', cosi' si spunta un giorno per
+   volta. Le occorrenze si riconoscono dall'identificativo: la prima ha
+   quello base, le altre "base~2", "base~3". Nessuna colonna in piu' sul
+   foglio, quindi gli Apps Script gia' distribuiti continuano a valere. */
+const gruppoId = c => String(c && c.id || '').split('~')[0];
+const serie    = gid => attivi().filter(c=>gruppoId(c)===gid);
+
+function idSorella(gid){
+  let n = 2;
+  while(compiti.some(c=>c.id === gid+'~'+n)) n++;
+  return gid+'~'+n;
+}
+
 /* ══ Operazioni sui compiti ══════════════════════════════════════════ */
 function tocca(c){ c.updatedAt = new Date().toISOString(); dirty.add(c.id); }
 
@@ -992,6 +1022,13 @@ function cardCompito(c){
   if(tardi){
     const b=document.createElement('span'); b.className='badge-late';
     b.textContent='in ritardo · '+etichetta(c.giorno); meta.appendChild(b);
+  }
+  const sorelle = attivi().filter(x=>gruppoId(x)===gruppoId(c) && x.giorno)
+                          .sort((a,b)=>a.giorno<b.giorno?-1:1);
+  if(sorelle.length > 1 && c.giorno){
+    const b=document.createElement('span'); b.className='badge-serie';
+    b.textContent = (sorelle.indexOf(c)+1) + ' di ' + sorelle.length + ' giorni';
+    meta.appendChild(b);
   }
   if(c.fonte==='nuvola'){
     const b=document.createElement('span'); b.className='badge-src'; b.textContent='Nuvola'; meta.appendChild(b);
@@ -1138,57 +1175,133 @@ function apriSheet(id){
   $('#shTitle').textContent = c ? 'Modifica compito' : 'Nuovo compito';
   $('#shMat').value  = c ? c.materia : '';
   $('#shTxt').value  = c ? c.testo   : '';
-  $('#shDate').value = c && c.giorno ? c.giorno : '';
+  $('#shDate').value = '';
   $('#shNote').value = c ? (c.note || '') : '';
   $('#shDel').classList.toggle('hidden', !c);
-  renderChips(c ? c.giorno : '');
+
+  // Tutti i giorni gia' assegnati a questo compito, non solo quello toccato
+  giorniSel = new Set(c ? serie(gruppoId(c)).map(x=>x.giorno).filter(Boolean) : []);
+  chipOffset = c && c.giorno ? settimanaDi(c.giorno) : offset;
+
+  renderChips();
   $('#scrim').classList.add('on');
   $('#sheet').classList.add('on');
   if(!c) setTimeout(()=>$('#shMat').focus(), 260);
+}
+
+// Di quante settimane dista dal lunedi' di questa settimana
+function settimanaDi(g){
+  const a = lunediDi(new Date()), b = lunediDi(new Date(g+'T12:00:00'));
+  return Math.round((b - a) / (7*24*3600*1000));
 }
 function chiudiSheet(){
   $('#scrim').classList.remove('on');
   $('#sheet').classList.remove('on');
   editId = null;
 }
-function renderChips(sel){
-  const base = sel && sel>='1900-01-01' ? new Date(sel+'T12:00:00') : piuGiorni(lunediDi(new Date()), offset*7+3);
-  const lun = lunediDi(base);
+function renderChips(){
+  const lun = piuGiorni(lunediDi(new Date()), chipOffset*7);
+  const dom = piuGiorni(lun,6);
   const sug = suggerito($('#shMat').value);
   const box = $('#shDays'); box.innerHTML='';
 
+  $('#shWeek').textContent =
+    chipOffset===0 ? 'Questa settimana' :
+    chipOffset===1 ? 'Prossima settimana' :
+    chipOffset===-1 ? 'Settimana scorsa' :
+    lun.getDate()+' '+MESI[lun.getMonth()].slice(0,3)+' – '+dom.getDate()+' '+MESI[dom.getMonth()].slice(0,3);
+
   const none = document.createElement('button');
-  none.className='chip'+(sel?'':' on'); none.type='button';
+  none.className='chip'+(giorniSel.size?'':' on'); none.type='button';
   none.innerHTML='In arrivo<small>non pianificato</small>';
-  none.onclick = ()=>{ $('#shDate').value=''; renderChips(''); };
+  none.onclick = ()=>{ giorniSel.clear(); renderChips(); };
   box.appendChild(none);
 
   for(let i=0;i<7;i++){
     const d = piuGiorni(lun,i), g = iso(d);
     const b = document.createElement('button');
     b.type='button';
-    b.className='chip'+(g===sel?' on':'')+(sug===i && !sel ? ' sugg':'');
+    b.className='chip'+(giorniSel.has(g)?' on':'')+(sug===i && !giorniSel.size ? ' sugg':'');
     b.innerHTML = GIORNI_C[i]+'<small>'+d.getDate()+' '+MESI[d.getMonth()].slice(0,3)+'</small>';
-    b.onclick = ()=>{ $('#shDate').value=g; renderChips(g); };
+    b.onclick = ()=>{
+      giorniSel.has(g) ? giorniSel.delete(g) : giorniSel.add(g);
+      renderChips();
+    };
     box.appendChild(b);
+  }
+
+  // Riepilogo: serve perche' i giorni scelti possono stare in settimane
+  // diverse da quella mostrata dai chip.
+  const sc = $('#shSel'); sc.innerHTML='';
+  if(giorniSel.size > 1){
+    const el = document.createElement('div');
+    el.className = 'riepilogo-giorni';
+    el.textContent = 'Lo fa in ' + giorniSel.size + ' giorni: ' +
+      [...giorniSel].sort().map(etichettaBreve).join(' · ');
+    sc.appendChild(el);
   }
 }
 
 function salvaSheet(){
   const materia = $('#shMat').value.trim();
   const testo   = $('#shTxt').value.trim();
-  const giorno  = $('#shDate').value || '';
   const note    = $('#shNote').value.trim();
+  const giorni  = [...giorniSel].filter(Boolean).sort();
   if(!materia && !testo){ toast('Scrivi almeno la materia'); return; }
 
   if(editId){
-    const c = compiti.find(x=>x.id===editId);
-    c.materia = materia; c.testo = testo; c.giorno = giorno; c.note = note;
-    tocca(c);
+    const partenza = compiti.find(x=>x.id===editId);
+    const gid = gruppoId(partenza);
+    const sorelle = serie(gid);
+    const base = sorelle.find(x=>x.id===gid) || partenza;
+
+    // Il contenuto e' lo stesso per tutte le occorrenze
+    sorelle.forEach(c=>{ c.materia=materia; c.testo=testo; c.note=note; tocca(c); });
+
+    if(!giorni.length){
+      // Torna in "In arrivo": resta una sola occorrenza, le altre nel cestino
+      sorelle.forEach(c=>{
+        if(c===base){ c.giorno=''; c.fatto=false; }   // torna da fare
+        else { c.deleted=true; }
+        tocca(c);
+      });
+    } else {
+      const liberi = sorelle.slice();
+      const usati = {};
+      // chi e' gia' sul giorno giusto resta dov'e'
+      giorni.forEach(g=>{
+        const i = liberi.findIndex(c=>c.giorno===g);
+        if(i!==-1) usati[g] = liberi.splice(i,1)[0];
+      });
+      // le occorrenze avanzate coprono i giorni nuovi, poi se ne creano altre
+      giorni.forEach(g=>{
+        if(usati[g]) return;
+        const c = liberi.shift();
+        if(c){ c.giorno=g; c.fatto=false; tocca(c); usati[g]=c; }
+        else {
+          usati[g] = nuovo({ id: idSorella(gid), materia, testo, note, giorno:g,
+                             dataOriginale: base.dataOriginale || '',
+                             fonte: base.fonte || 'manuale' });
+        }
+      });
+      // quelle rimaste senza giorno finiscono nel cestino, recuperabili
+      liberi.forEach(c=>{ c.deleted = true; tocca(c); });
+    }
   } else {
-    nuovo({ materia, testo, giorno, note, dataOriginale: giorno, fonte:'manuale' });
+    if(!giorni.length){
+      nuovo({ materia, testo, note, giorno:'', dataOriginale:'', fonte:'manuale' });
+    } else {
+      const primo = nuovo({ materia, testo, note, giorno:giorni[0],
+                            dataOriginale:giorni[0], fonte:'manuale' });
+      giorni.slice(1).forEach(g=>nuovo({
+        id: idSorella(primo.id), materia, testo, note, giorno:g,
+        dataOriginale: giorni[0], fonte:'manuale' }));
+    }
   }
+
+  const n = giorni.length;
   chiudiSheet(); cache(); render(); salva();
+  if(n > 1) toast('Assegnato a ' + n + ' giorni');
 }
 
 /* ══ Impostazioni ════════════════════════════════════════════════════ */
@@ -1289,7 +1402,7 @@ function elabora(){
   }
   const og = oggi();
   daImportare = r.compiti.map(c=>{
-    const gia = compiti.find(x=>x.id===c.id);
+    const gia = compiti.find(x=>x.id===c.id) || compiti.find(x=>gruppoId(x)===c.id);
     let motivo = '';
     if(c.dataConsegna <  og) motivo = 'giorno già passato';
     else if(c.dataConsegna === og) motivo = 'è oggi';
@@ -1378,7 +1491,7 @@ function confermaIncolla(){
 
   let aggiunti = 0, ripresi = 0;
   scelti.forEach(v=>{
-    const gia = compiti.find(x=>x.id===v.id);
+    const gia = compiti.find(x=>x.id===v.id) || compiti.find(x=>gruppoId(x)===v.id);
     if(gia){
       // Gia' presente (magari eliminato): lo riporto in vita senza
       // toccare il giorno assegnato e le note che ci hai scritto.
@@ -1658,11 +1771,25 @@ function init(){
   $('#shCancel').onclick = chiudiSheet;
   $('#scrim').onclick    = chiudiSheet;
   $('#shOk').onclick     = salvaSheet;
-  $('#shMat').oninput    = ()=>{ if(!$('#shDate').value) renderChips(''); };
-  $('#shDate').onchange  = ()=>renderChips($('#shDate').value);
+  $('#shMat').oninput    = ()=>renderChips();
+  $('#shPrev').onclick   = ()=>{ chipOffset--; renderChips(); };
+  $('#shNext').onclick   = ()=>{ chipOffset++; renderChips(); };
+  $('#shDate').onchange  = ()=>{
+    const g = $('#shDate').value;
+    if(g){ giorniSel.add(g); chipOffset = settimanaDi(g); $('#shDate').value=''; }
+    renderChips();
+  };
   $('#shDel').onclick    = ()=>{
     const c = compiti.find(x=>x.id===editId);
-    if(c && confirm('Eliminare questo compito?')){ c.deleted=true; tocca(c); chiudiSheet(); cache(); render(); salva(); }
+    if(!c) return;
+    const sorelle = serie(gruppoId(c));
+    const msg = sorelle.length > 1
+      ? 'Eliminare questo compito da tutti e ' + sorelle.length + ' i giorni?\n' +
+        'Per toglierlo da un giorno solo, deseleziona quel giorno e salva.'
+      : 'Eliminare questo compito?';
+    if(!confirm(msg)) return;
+    sorelle.forEach(x=>{ x.deleted = true; tocca(x); });
+    chiudiSheet(); cache(); render(); salva();
   };
 
   // Regole
